@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fun_gp"
+version = "1.0"
+description = "Yet another framework to communicate with GlobalPlatform-compatible smart cards"
+authors = [
+    { name = "Telman", email = "void.deref0@gmail.com" }
+]
+dependencies = [
+    "pyscard",
+    "pycryptodome",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fun_gp*"]

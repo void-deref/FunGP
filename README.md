@@ -13,21 +13,19 @@ On Ubuntu: `sudo apt install python3.12 python3.12-venv python3.12-dev python3.1
 4. activate environment:  
 On Windows: `> .venv\Scripts\activate.bat`  
 On Ubuntu: `> source .venv/bin/activate`
-5. install `> python -m pip install pyscard` package
-6. install `> python -m pip install pycryptodome` package
-7. install `> python -m pip install -e .` this is the local installation of the FunGP package
-8. optional: deactivate environment before leaving the project:  
+5. install `> python -m pip install -e .` this is the local installation of the FunGP package and its dependencies
+6. optional: deactivate environment before leaving the project:  
 On Windows: `> .venv\Scripts\deactivate.bat`  
 On Ubuntu: `> deactivate`  
 
 ### Task list
 - [+] connection establishment with smart card
-- [-] parsing ATR
+- [ ] parsing ATR
 - [+] `apdu transmit` command
 - [+] `get response` command
 - [+] `SCP02` protocol
-- [-] parsing a data fetched be means of GET DATA command
-- [-] parsing a data fetched be means of GET STATUS command
+- [ ] parsing a data fetched be means of GET DATA command
+- [ ] parsing a data fetched be means of GET STATUS command
 - [+] `install[for load]` command
 - [+] `load` command
 - [+] `install[for install]` command
