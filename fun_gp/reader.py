@@ -196,31 +196,3 @@ class Reader:
         accum    = accum + response[-2:]
         response = accum
         return response
-
-
-    def _6c_procedure(self, command:list, response:list):
-        """
-        ETSI 102 221, 7.3.1.1.5 and annex 'C'  
-        Instructs to immediately resend the previous command header with Le set to SW2.
-        
-        :param command: a command to be resend with updated Le field
-        :param response: used only to retrieve 6Cxx status word.
-        """
-        accum = []
-        command[4] = response[-1]
-        while True:
-            more_data = list(command)
-
-            response, duration = self._command_apdu(more_data)
-            self._response_apdu(response, duration)
-            
-            accum = accum + response[:-2] # trim the SW bytes
-            if response[-2] != 0x61: # quit if SW1 isn't equal 61
-                break
-            
-            command = [0x00, 0xC0, 0x00, 0x00] + [response[-1]]
-        # append SW which follows the last data block
-        # being fetched from the final GET RESPONSE
-        accum    = accum + response[-2:]
-        response = accum
-        return response
