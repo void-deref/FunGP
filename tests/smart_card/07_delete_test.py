@@ -1,4 +1,4 @@
-from fun_gp.smart_card import SmartCard
+from fun_gp import SmartCard
 from fun_gp.utils import lv
 
 known_readers = ['ACS ACR39U ICC Reader 0', 'ACS ACR39U ICC Reader 00 00']
