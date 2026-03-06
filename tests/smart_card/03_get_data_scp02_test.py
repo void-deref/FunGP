@@ -8,8 +8,6 @@ isd_default_keys = ["404142434445464748494A4B4C4D4E4F",
 
 isd = SmartCard(known_readers, isd_default_keys)
 
-isd.connect_to_first_available()
-
 isd.apdu_plain('00A4 0400' + lv('a000000151000000'), expected_sw=0x9000, name='SELECT: isd')
 isd.mutual_auth()
 
@@ -26,5 +24,3 @@ isd.apdu_scp02('80CA 00C1 00', expected_sw=0x9000, name='GET DATA: Sequence Coun
 isd.apdu_scp02('80CA 00C2 00', expected_sw=0x9000, name='GET DATA: Confirmation Counter')
 isd.apdu_scp02('80CA 0066 00', expected_sw=0x9000, name='GET DATA: Card or Security Domain Recognition Data')
 isd.apdu_scp02('80CA 0067 00', expected_sw=0x9000, name='GET DATA: Card capability information')
-
-isd.close_context()

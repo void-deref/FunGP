@@ -22,7 +22,6 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         cmd[0] |= 0x04 # set GP proprietary SM flag
         cmd[4] += 8
         if cmd[4] > 255:
-            self.close_context()
             raise ValueError(f'The length of input data doesn\'t take into account the 8-byte C-MAC.'
                              + f'\n This causes the total length of CDATA equals {cmd[4]} bytes.')
         
@@ -45,7 +44,6 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         expected_sw  = 0x9000
         actual_sw    = int.from_bytes(response[-2:], byteorder='big')
         if expected_sw != actual_sw:
-            self.close_context()
             raise ValueError(
                 f'Error: expected {expected_sw:#04x} got {actual_sw:#04x}\
                 \n\t\t\t****************************** CAUTION! ******************************\
@@ -87,7 +85,6 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         :param applet_aid: AID of an applet to be delete.
         """
         if len(package_aid) == 0 and len(applet_aid) == 0:
-            self.close_context()
             raise ValueError('define either package or applet AID')
         
         self._delete(self.apdu_scp02, package_aid, applet_aid, sw)

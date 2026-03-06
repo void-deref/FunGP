@@ -15,6 +15,10 @@ class Reader:
         self.card = 0
         self.protocol = None
         self.context = None
+        self.connect_to_first_available()
+
+    def __del__(self):
+        self.close_context()
 
     def apdu_plain(self, cmd:list|str, expected_sw:int = 0, name:str = None):
         if isinstance(cmd, str): # transform hex string into byte array
@@ -38,7 +42,6 @@ class Reader:
         
         actual_sw = int.from_bytes(response[-2:], byteorder='big')
         if expected_sw != 0 and expected_sw != actual_sw:
-            self.close_context()
             raise ValueError(f'expected {expected_sw:#04x} got {actual_sw:#04x} [{SW_list.get(actual_sw, "to be added to dictionary")}]')
 
         return response
@@ -56,8 +59,6 @@ class Reader:
                 continue
             else:
                 break
-        if self.card == 0:
-            self.close_context()
 
 
     def close_context(self):
@@ -101,7 +102,6 @@ class Reader:
         if result != SCARD_S_SUCCESS:
             raise ValueError(f'Failed to retrieve a list of available readers [{SCardGetErrorMessage(result)}]')
         elif len(readers) < 1:
-            self.close_context()
             raise ValueError('There is no connected readers at all.')
         else:
             print('Available PCSC readers:')
@@ -152,7 +152,6 @@ class Reader:
         duration = time.time() - startTime
         
         if result != SCARD_S_SUCCESS:
-            self.close_context()
             print(f'>> {s}')
             raise ValueError(f'Failed to transmit: [{SCardGetErrorMessage(result)}]')
 

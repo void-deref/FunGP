@@ -12,12 +12,8 @@ packages = [
 
 isd = SmartCard(known_readers, isd_default_keys)
 
-isd.connect_to_first_available()
-
 isd.apdu_plain('00A4 0400' + lv('a000000151000000'), expected_sw=0x9000, name='SELECT: isd')
 isd.mutual_auth()
 
 for aid in packages:
     isd.uninstall_app_scp02(package_aid=aid)
-
-isd.close_context()

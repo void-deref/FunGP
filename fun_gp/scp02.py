@@ -86,7 +86,6 @@ class SCP02:
         elif (key_type == 'dec'):
             plain_text[1] = 0x81
         else:
-            # self.close_context()
             # raise ValueError(f'Unknown type of ISD static key.')
             return None
         
