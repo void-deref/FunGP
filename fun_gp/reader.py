@@ -84,13 +84,28 @@ class Reader:
             self.card, 
             SCARD_SHARE_SHARED,
             SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, 
-            SCARD_RESET_CARD  # Warm Reset
+            SCARD_RESET_CARD
         )
 
         if result != SCARD_S_SUCCESS:
             print(f'Failed to release context: [{SCardGetErrorMessage(result)}]')
         else:
             print('Warm reset.')
+            self.protocol = active_protocol
+            self._get_card_info(active_protocol)
+    
+    def cold_reset(self):
+        result, active_protocol = SCardReconnect(
+            self.card, 
+            SCARD_SHARE_SHARED,
+            SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, 
+            SCARD_UNPOWER_CARD
+        )
+
+        if result != SCARD_S_SUCCESS:
+            print(f'Failed to release context: [{SCardGetErrorMessage(result)}]')
+        else:
+            print('Cold reset.')
             self.protocol = active_protocol
             self._get_card_info(active_protocol)
     

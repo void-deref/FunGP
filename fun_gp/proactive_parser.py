@@ -100,11 +100,14 @@ class ProParser:
                     print(f'\tdest address:   {dest_address}')
 
                     tpdu_idx += da_len + 4 # jump straight to TP-UD
+                    resp_code = 0x00
                     if [0x02, 0x71, 0x00] == value[tpdu_idx:tpdu_idx + 3]:
                         resp_code = value[tpdu_idx + 15]
-                        print(f'\tResp status:    {resp_code:02x} ({response_status[resp_code]})')
+                        print(f'\tResp status:    {resp_code:02x}')
                     
                     print(f'\tTP-UD:          {bytes_to_hex(value[tpdu_idx:])}')
+                    if resp_code != 0x00:
+                        raise ValueError(f'\tThe last SCP80 Command Packet failed with the following reason: {response_status[resp_code]}')
 
                 case 0x0C | 0x8c: # Cell Broadcast page | PDU session establishment parameters
                     pass
