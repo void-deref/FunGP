@@ -184,7 +184,7 @@ class SMS_TPDU:
         self.tag          = 0x8B
         self.len          = [0x00] # Mind the ASN representation, i.e. '00-7F' or '8180-81FF'
         self.first_octet  = 0x60   # TPDU of type SMS-DELIVER, PoR on error
-        self.orig_address = hex_to_bytes('0381 77f9')
+        self.orig_address = hex_to_bytes('0391 77f7')
         self.pid_dcs      = hex_to_bytes('7ff6') #[0x7F, 0xF6]
 
         # time_stamp = '407070 611535 00' - sample value taken from SCP80-manager
@@ -222,7 +222,7 @@ class SMSPP:
         self.device_identities = hex_to_bytes('8202 8381')
         
         # TON - international number; NPI - ISDN
-        self.address    = hex_to_bytes('06' + lv('91' + '198901509141'))
+        self.address    = hex_to_bytes('03' + lv('91' + '77f7'))
         
         self.tpdu = SMS_TPDU(user_data, is_concat, is_secured)
 

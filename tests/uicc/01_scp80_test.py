@@ -7,13 +7,13 @@ iccid         = '8970199 0123456789 1'
 tar_value     = '74 61 72'
 
 text     = 'длина этой строки 29 символов'
-test_mds = lv('08' + bytes_to_hex(text.encode('utf-16-be')))
+test_msg = lv('08' + bytes_to_hex(text.encode('utf-16-be')))
 
 
 def main():
     uicc = UICC(known_readers, iccid)
     uicc.terminal_profile()
-    uicc.apdu_scp80(test_mds, spi='1622', kic=0x09, kid=0x09, tar=tar_value)
+    uicc.apdu_scp80(test_msg, spi='1622', kic=0xa9, kid=0xa9, tar=tar_value)
 
 main()
 
