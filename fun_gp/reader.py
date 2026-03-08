@@ -7,6 +7,7 @@ from smartcard.scard import SCardEstablishContext, SCardGetErrorMessage,        
 
 from fun_gp         import SW_list
 from fun_gp.utils   import bytes_to_hex, hex_to_bytes
+import json
 import time
 
 class Reader:
@@ -195,3 +196,65 @@ class Reader:
         accum    = accum + response[-2:]
         response = accum
         return response
+
+
+    def _6c_procedure(self, command:list, response:list):
+        """
+        ETSI 102 221, 7.3.1.1.5 and annex 'C'  
+        Instructs to immediately resend the previous command header with Le set to SW2.
+        
+        :param command: a command to be resend with updated Le field
+        :param response: used only to retrieve 6Cxx status word.
+        """
+        accum = []
+        command[4] = response[-1]
+        while True:
+            more_data = list(command)
+
+            response, duration = self._command_apdu(more_data)
+            self._response_apdu(response, duration)
+            
+            accum = accum + response[:-2] # trim the SW bytes
+            if response[-2] != 0x61: # quit if SW1 isn't equal 61
+                break
+            
+            command = [0x00, 0xC0, 0x00, 0x00] + [response[-1]]
+        # append SW which follows the last data block
+        # being fetched from the final GET RESPONSE
+        accum    = accum + response[-2:]
+        response = accum
+        return response
+
+
+class Card:
+    def __init__(self, cntr:str, key_set:list[str]):
+        if len(key_set) != 3 or len(cntr) != 10:
+            raise ValueError(f'Either cntr or key_set have wrong length')
+        
+        self.cntr = cntr
+        self.kic = key_set[0]
+        self.kid = key_set[1]
+        self.kik = key_set[2]
+    
+    def to_dict(self):
+        return {
+            'cntr'   : self.cntr,
+            'key_set': [self.kic,self.kid,self.kik]
+        }
+
+
+class CardDeck:
+    def __init__(self, path:str=None):
+        self.path = '../../resources/uicc_deck.json' if path == None else path
+
+    def update(self, card_deck:dict[Card]):
+        with open(self.path, 'w') as jfile:
+            json.dump({iccid:card.to_dict() for iccid, card in card_deck.items()}, jfile, indent=4)
+
+    def load(self) -> dict[Card]:
+        card_deck:dict[Card] = {}
+        with open(self.path, 'r') as jfile:
+            raw_json  = json.load(jfile)
+            card_deck = {str(iccid): Card(**card) for iccid, card in raw_json.items()}
+        
+        return card_deck
