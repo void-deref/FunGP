@@ -4,10 +4,10 @@ from Crypto.Cipher import DES3, AES
 from Crypto.Hash import CMAC
 
 class SCP80:
-    def __init__(self, iccid:str):
+    def __init__(self, iccid:str, path_to_card_deck:str):
         
         self.iccid:str            = ''.join(c for c in iccid if c.isalnum()) # trim the white spaces (if any)
-        self.db:CardDeck          = CardDeck()
+        self.db:CardDeck          = CardDeck(path_to_card_deck)
         self.card_deck:dict[Card] = self.db.load()
 
         self.curr_card:Card = self.card_deck.get(self.iccid)

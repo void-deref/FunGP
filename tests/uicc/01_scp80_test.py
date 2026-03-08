@@ -8,10 +8,10 @@ tar_value     = '74 61 72'
 
 text     = 'длина этой строки 29 символов'
 test_msg = lv('08' + bytes_to_hex(text.encode('utf-16-be')))
-
+card_deck_path = '../../resources/known-simcards.json'
 
 def main():
-    uicc = UICC(known_readers, iccid)
+    uicc = UICC(known_readers, iccid, card_deck_path)
     uicc.terminal_profile()
     uicc.apdu_scp80(test_msg, spi='1622', kic=0xa9, kid=0xa9, tar=tar_value)
 

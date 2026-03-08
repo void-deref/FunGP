@@ -246,8 +246,8 @@ class Card:
 
 
 class CardDeck:
-    def __init__(self):
-        self.path = '../../resources/known-simcards.json'
+    def __init__(self, path_to_card_deck:str):
+        self.path = path_to_card_deck
 
     def update(self, card_deck:dict[Card]):
         with open(self.path, 'w') as jfile:
