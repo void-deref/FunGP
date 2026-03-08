@@ -1,18 +1,28 @@
+from fun_gp import Card, CardDeck
 from fun_gp.utils import hex_to_bytes, bytes_to_hex, lv
 from Crypto.Cipher import DES3, AES
 from Crypto.Hash import CMAC
 
 class SCP80:
-    def __init__(self, key_set:list=[str], counter:list|str=''):
+    def __init__(self, iccid:str):
         
-        if isinstance(counter, str): # transform hex string into byte array
-            counter = hex_to_bytes(counter)
+        self.iccid:str            = iccid
+        self.db:CardDeck          = CardDeck()
+        self.card_deck:dict[Card] = self.db.load()
 
-        self.kic_key = hex_to_bytes(key_set[0])
-        self.kid_key = hex_to_bytes(key_set[1])
-        self.kik_key = hex_to_bytes(key_set[2])
-        self.cntr    = counter
+        self.curr_card:Card = self.card_deck.get(self.iccid)
+        self.kic_key = hex_to_bytes(self.curr_card.kic)
+        self.kid_key = hex_to_bytes(self.curr_card.kid)
+        self.kik_key = hex_to_bytes(self.curr_card.kik)
+        self.cntr    = hex_to_bytes(self.curr_card.cntr)
 
+
+    def __del__(self):
+        self.curr_card.cntr        = bytes_to_hex(self.cntr)
+        self.card_deck[self.iccid] = self.curr_card
+        self.db.update(self.card_deck)
+        print(f'Card database have been updated successfully')
+    
 
     def _encrypt(self, plain_text:list|str, algo:int) -> str:
 
