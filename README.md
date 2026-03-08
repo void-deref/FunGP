@@ -45,9 +45,10 @@ Available PCSC readers:
 Traceback (most recent call last):
 --//--
 ```
-4. write to the `./resources/known-simcards.json` correct values of your SIM card (ICCID, CNTR and keys)
-5. write to the `tar_value` variable a correct value of your application TAR
-6. ensure that `uicc.apdu_scp80()` is being passed over a correct params
+4. update the `iccid` global variable with the correct ICCID value of your SIM-card
+5. write to the `./resources/known-simcards.json` correct values of your SIM card (ICCID, CNTR and keys)
+6. write to the `tar_value` global variable  a correct value of your application TAR
+7. ensure that `uicc.apdu_scp80()` gets a correct params
 
 ### Task list
 - [+] connection establishment with smart card
