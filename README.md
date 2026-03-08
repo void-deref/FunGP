@@ -22,7 +22,7 @@ On Ubuntu: `> deactivate`
 ## Running smart card examples
 1. change to ./tests/smart_card
 2. open 05_install_for_install_test.py
-3. set the `isd_default_keys` variable with the name of your reader. To get such info just run this script - before falling with error it will display a list of available readers:  
+3. set the `known_readers` variable with the name of your reader. To get such info just run this script - before falling with error it will display a list of available readers:  
 ```shell
 Context established.
 Available PCSC readers:
@@ -36,7 +36,7 @@ Traceback (most recent call last):
 ## Running uicc exmaple
 1. change to ./tests/uicc
 2. open 01_scp80_test.py
-3. set the `isd_default_keys` variable with the name of your reader. To get such info just run this script - before falling with error it will display a list of available readers:  
+3. set the `known_readers` variable with the name of your reader. To get such info just run this script - before falling with error it will display a list of available readers:  
 ```shell
 Context established.
 Available PCSC readers:
