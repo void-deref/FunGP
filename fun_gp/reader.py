@@ -20,6 +20,8 @@ class Reader:
 
     def __del__(self):
         self.close_context()
+        if hasattr(super(), '__del__'):
+            super().__del__()
 
     def apdu_plain(self, cmd:list|str, expected_sw:int = 0, name:str = None):
         if isinstance(cmd, str): # transform hex string into byte array
@@ -244,8 +246,8 @@ class Card:
 
 
 class CardDeck:
-    def __init__(self, path:str=None):
-        self.path = '../../resources/known_cards-specimen.json' if path == None else path
+    def __init__(self):
+        self.path = '../../resources/known-simcards.json'
 
     def update(self, card_deck:dict[Card]):
         with open(self.path, 'w') as jfile:

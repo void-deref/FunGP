@@ -14,8 +14,8 @@ class UICC(Reader, SCP80, CardContentManagement):
     def __init__(self, known_readers:list, iccid:str):
         
         Reader.__init__(self, known_readers)
-        CardContentManagement.__init__(self)
         SCP80.__init__(self, iccid)
+        CardContentManagement.__init__(self)
 
     # The structure of ENVELOPE SMS-PP DOWNLOAD is described in ETSI 131 111, 7.1.1.2
     def apdu_scp80(self, payload:str|list, spi:str=None, kic:int=None, kid:int=None, tar:str=None, expected_sw:int=0) -> list[SMSPP]:
@@ -45,7 +45,7 @@ class UICC(Reader, SCP80, CardContentManagement):
         #   the length of CH must take into account currently abcent CC field in advance!!!;
 
         # - if ciphering is requested too, then we need to discard CC, because the 'PCNTR'
-        #   field isn't '00', and also there are 'PCNTR padding bytes' appended to payload,
+        #   field isn't '00' anymore, and also there are 'PCNTR padding bytes' appended to payload,
         #   which must be passed over to CC calculation function too.
 
         if cmd_pkt.ch.spi[0] & 0x02 != 0x00: # checksum takes place. Add 8 bytes to length of CP and CH
@@ -95,27 +95,25 @@ class UICC(Reader, SCP80, CardContentManagement):
 
         parser = ProParser()
         for sms in sms_list:
-            self._print_scp80(sms)
             response = self.envelope(sms[0:])
+            self._print_scp80(sms)
             
             while response[-2] == 0x91:
                 response = self.fetch(response[-1])
                 # Trim last two bytes of SW.
-                command_type = parser.parse(response[0:-2])
-                response = self.terminal_response('8103' + bytes_to_hex(command_type[0]) + '82028281 030100' + bytes_to_hex(command_type[1]))
+                term_resp = parser.parse(response[0:-2])
+                response = self.terminal_response('8103' + bytes_to_hex(term_resp[0]) + '82028281 030100' + bytes_to_hex(term_resp[1]))
 
         actual_sw = int.from_bytes(response[-2:], byteorder='big')
         if expected_sw != 0 and expected_sw != actual_sw:
-            
             raise ValueError(f'expected {expected_sw:#04x} got {actual_sw:#04x} [{SW_list.get(actual_sw, "to be added to dictionary")}]')
 
 
-    def terminal_profile(self, phone_features:list|str, expected_sw:int=0):
-        if isinstance(phone_features, str):
-            phone_features = hex_to_bytes(phone_features)
+    def terminal_profile(self, expected_sw:int=0):
         
-        cmd = [0x80,0x10,0x00,0x00, 0x00] + phone_features
-        cmd[4] = len(phone_features)
+        me_features = [0xFF]*6
+        cmd         = [0x80,0x10,0x00,0x00, 0x00] + me_features
+        cmd[4]      = len(me_features)
 
         print(f'Terminal Profile')
         response, duration = self._command_apdu(cmd)

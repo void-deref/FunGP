@@ -162,7 +162,7 @@ def decode_ucs2(input:str|list) -> str:
     first_byte = input[0]
     
     match first_byte:
-        case 0x80:
+        case 0x80 | 0x08:
             # UTF-16BE (ETSI 102 221 Annex A.1)
             res = input[1:].decode('utf-16-be')
         

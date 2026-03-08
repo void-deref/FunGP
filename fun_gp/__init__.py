@@ -6,10 +6,12 @@ from fun_gp.smart_card import SmartCard
 from fun_gp.proactive_parser import ProParser
 from fun_gp.scp80 import SCP80
 from fun_gp.SMS import SMSPP, CP, CH
+from fun_gp.uicc import UICC
 
 __all__ = [
     "SW_list", "Reader", "Card", "CardDeck",
     "SCP02", "CardContentManagement", "SmartCard",
     "ProParser", "SCP80",
     "SMSPP", "CP", "CH",
+    "UICC",
 ]

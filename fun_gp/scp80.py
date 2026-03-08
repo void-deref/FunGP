@@ -6,7 +6,7 @@ from Crypto.Hash import CMAC
 class SCP80:
     def __init__(self, iccid:str):
         
-        self.iccid:str            = iccid
+        self.iccid:str            = ''.join(c for c in iccid if c.isalnum()) # trim the white spaces (if any)
         self.db:CardDeck          = CardDeck()
         self.card_deck:dict[Card] = self.db.load()
 
@@ -22,6 +22,8 @@ class SCP80:
         self.card_deck[self.iccid] = self.curr_card
         self.db.update(self.card_deck)
         print(f'Card database have been updated successfully')
+        if hasattr(super(), '__del__'):
+            super().__del__()
     
 
     def _encrypt(self, plain_text:list|str, algo:int) -> str:
@@ -95,4 +97,4 @@ class SCP80:
             if self.cntr[-1 - i] != 0x00:
                 break
         
-        # print(f'\tCounter\'s next value: {bytes_to_hex(self.cntr)}')
+        print(f'\tCounter\'s next value: {bytes_to_hex(self.cntr)}')
