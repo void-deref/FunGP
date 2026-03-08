@@ -120,3 +120,75 @@ def len_asn(an_array:list|str) -> str:
         num_bytes  = len(hex_val) // 2 # 0AF6 // 2 = 2. Two bytes are used to encode the length
         first_byte = 0x80 | num_bytes  # 0x80 | 2 = 82. 
         return f'{first_byte:02x}' + hex_val
+
+
+
+def decode_bcd(buffer:list|str):
+    if isinstance(buffer, str):
+        buffer = hex_to_bytes(buffer)
+    
+    # for each byte replace nibbles
+    res = ''.join([f"{(b & 0xF):x}{(b >> 4):x}" for b in buffer])
+    
+    # truncate tailing 'f's and return
+    return res.replace('f', '')
+
+
+def encode_bcd(buffer:list|str):
+    if isinstance(buffer, str):
+        clean_str = ''.join(c for c in buffer if c.isalnum())
+
+        if len(clean_str) % 2 != 0:
+            clean_str = clean_str + 'f'
+
+        buffer = hex_to_bytes(clean_str)
+    
+    # for each byte replace nibbles
+    res = ''.join([f"{(b & 0xF):x}{(b >> 4):x}" for b in buffer])
+    
+    return res
+
+
+def decode_ucs2(input:str|list) -> str:
+
+    res = ''
+    if len(input) == 0:
+        return res
+    
+    if isinstance(input, str):
+        input = hex_to_bytes(input)
+    
+    input      = bytearray(input)    
+    first_byte = input[0]
+    
+    match first_byte:
+        case 0x80:
+            # UTF-16BE (ETSI 102 221 Annex A.1)
+            res = input[1:].decode('utf-16-be')
+        
+        case 0x81:
+            # Combined. Annex A.2
+            length   = input[1]      # Number of chars in the string
+            base_ptr = input[2] << 7 # Fetch the upper half of the 16-byte base pointer
+            result   = []
+            
+            for i in range(3, 3 + length):
+                char_byte = input[i]
+
+                # if bit8 is set, then the remaining bits contain an offset value to be added to base pointer
+                if char_byte & 0x80:
+                    code_point = base_ptr + (char_byte & 0x7F)
+                    result.append(chr(code_point))
+                else:
+                    # otherwise it's a regualr 7-bit GSM default alphabet character
+                    result.append(chr(char_byte))
+            res =  "".join(result)
+            
+        case 0x82:
+            res =  "Parsing for 0x82 (offset-based) not implemented"
+            
+        case _:
+            # По умолчанию GSM 7/8 bit
+            res =  input[1:].decode('latin-1')
+    return res
+

@@ -3,8 +3,10 @@ from fun_gp.reader import Reader, Card, CardDeck
 from fun_gp.scp02 import SCP02
 from fun_gp.ccm import CardContentManagement
 from fun_gp.smart_card import SmartCard
-
+from fun_gp.proactive_parser import ProParser
+from fun_gp.scp80 import SCP80
 __all__ = [
     "SW_list", "Reader", "Card", "CardDeck",
-    "SCP02", "CardContentManagement", "SmartCard"
+    "SCP02", "CardContentManagement", "SmartCard",
+    "ProParser", "SCP80",
 ]
