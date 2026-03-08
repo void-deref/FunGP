@@ -18,6 +18,37 @@ On Ubuntu: `> source .venv/bin/activate`
 On Windows: `> .venv\Scripts\deactivate.bat`  
 On Ubuntu: `> deactivate`  
 
+
+## Running smart card examples
+1. change to ./tests/smart_card
+2. open 05_install_for_install_test.py
+3. set the `isd_default_keys` variable with the name of your reader. To get such info just run this script - before falling with error it will display a list of available readers:  
+```shell
+Context established.
+Available PCSC readers:
+    ACS ACR39U ICC Reader 0
+>> 00A40400 08 A000000151000000
+Traceback (most recent call last):
+--//--
+```
+4. run the script. It will install the SimpleApplet.cap file which resides in ./resources folder.
+
+## Running uicc exmaple
+1. change to ./tests/uicc
+2. open 01_scp80_test.py
+3. set the `isd_default_keys` variable with the name of your reader. To get such info just run this script - before falling with error it will display a list of available readers:  
+```shell
+Context established.
+Available PCSC readers:
+    ACS ACR39U ICC Reader 0
+>> 00A40400 08 A000000151000000
+Traceback (most recent call last):
+--//--
+```
+4. write to the `./resources/known-simcards.json` correct values of your SIM card (ICCID, CNTR and keys)
+5. write to the `tar_value` variable a correct value of your application TAR
+6. ensure that `uicc.apdu_scp80()` is being passed over a correct params
+
 ### Task list
 - [+] connection establishment with smart card
 - [ ] parsing ATR
@@ -31,6 +62,7 @@ On Ubuntu: `> deactivate`
 - [+] `install[for install]` command
 - [+] `install[for install and make selectable]` command
 - [+] `delete` command
+- [+] `SCP80` protocol
 
 
 
