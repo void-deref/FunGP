@@ -245,7 +245,7 @@ class Card:
 
 class CardDeck:
     def __init__(self, path:str=None):
-        self.path = '../../resources/uicc_deck.json' if path == None else path
+        self.path = '../../resources/known_cards-specimen.json' if path == None else path
 
     def update(self, card_deck:dict[Card]):
         with open(self.path, 'w') as jfile:
