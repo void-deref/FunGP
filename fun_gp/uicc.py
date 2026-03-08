@@ -18,7 +18,7 @@ class UICC(Reader, SCP80, CardContentManagement):
         CardContentManagement.__init__(self)
 
     # The structure of ENVELOPE SMS-PP DOWNLOAD is described in ETSI 131 111, 7.1.1.2
-    def apdu_scp80(self, payload:str|list, spi:str=None, kic:int=None, kid:int=None, tar:str=None, expected_sw:int=0) -> list[SMSPP]:
+    def apdu_scp80(self, payload:str|list, spi:str=None, kic:int=None, kid:int=None, tar:str=None, expected_sw:int=0):
 
         if isinstance(payload, str):
             payload = hex_to_bytes(payload)
