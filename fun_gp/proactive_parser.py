@@ -18,7 +18,7 @@ class ProParser:
         self.length = 0
         
 
-    def parse(self, raw_bytes:list)->list[list[int], list[int]]:
+    def parse(self, raw_bytes:list, por:int=0x00)->list[list[int], list[int]]:
 
         self._init_parser(raw_bytes)
 
@@ -104,10 +104,10 @@ class ProParser:
                     if [0x02, 0x71, 0x00] == value[tpdu_idx:tpdu_idx + 3]:
                         resp_code = value[tpdu_idx + 15]
                         print(f'\tResp status:    {resp_code:02x}')
+                        if resp_code != por:
+                            raise ValueError(f'\tSCP80 Command Packet failure:\nexpected {response_status[por]}\ngot      {response_status[resp_code]}')
                     
                     print(f'\tTP-UD:          {bytes_to_hex(value[tpdu_idx:])}')
-                    if resp_code != 0x00:
-                        raise ValueError(f'\tThe last SCP80 Command Packet failed with the following reason: {response_status[resp_code]}')
 
                 case 0x0C | 0x8c: # Cell Broadcast page | PDU session establishment parameters
                     pass
