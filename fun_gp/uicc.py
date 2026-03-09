@@ -13,9 +13,13 @@ class UICC(Reader, SCP80, CardContentManagement):
          - the usage of a data returned to an envelope command (9000, warnings 62xx or 63xx, errors 6Fxx);  
          - unavailability of the CAT (9300, see clause 14.6.6);  
     """
-    def __init__(self, known_readers:list, iccid:str, path_to_card_deck:str):
+    def __init__(self, known_readers:list, path_to_card_deck:str, iccid:str=None):
         
         Reader.__init__(self, known_readers)
+
+        if iccid == None:
+            iccid = self._get_iccid()
+        
         SCP80.__init__(self, iccid, path_to_card_deck)
         CardContentManagement.__init__(self)
 

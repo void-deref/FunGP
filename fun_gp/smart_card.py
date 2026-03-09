@@ -76,8 +76,13 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         for next in commands:
             self.apdu_scp02(next, expected_sw=0x9000, name='LOAD')
 
+        # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Ln' is greater than 'self.cap_file_size'.
+        # The difference is C * N + T, where
+        # C - the length of CMAC,
+        # N - number of LOAD commands,
+        # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
         print(f'***** CAP-file size *****')
-        print(f'{self.cap_file_size} bytes')
+        print(f'{self.cap_file_size} bytes.')
 
         if len(app_params) != 0:
             app_params = lv(applet_aid) + app_params

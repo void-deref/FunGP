@@ -114,21 +114,17 @@ class CardContentManagement:
         # 84E60C00 37 05 A000000082 0BA00000008253696D706C65 0BA00000008253696D706C65 0100 C90C0BA00000008253696D706C6500E2D3AF0A2B4B20EC
         print(f'Package AID: {package_aid}\nApplet AID:  {applet_aid}\n')
         return cmd
-        
 
 
     def _compile_delete(self, package_aid:str='', applet_aid:str='', sw:int=0):
-        aid = ''
+        aid = applet_aid
+        p2  = 0x00
         if len(package_aid) != 0:
             aid = package_aid
-            cmd = '80E4 0080' + lv('4F' + lv(package_aid))
-        else:
-            aid = applet_aid
-            cmd = '80E4 0000' + lv('4F' + lv(applet_aid))
+            p2 =0x80
+        
+        cmd = f'80E4 00{p2:02x}' + lv('4F' + lv(aid))
         return aid, cmd
-        
-
-        
 
 
     def _parse_cap_file(self, cap_path:str):
