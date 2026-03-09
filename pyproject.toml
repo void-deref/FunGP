@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fun_gp"
-version = "1.5"
+version = "1.12"
 description = "Yet another framework to communicate with GlobalPlatform-compatible smart cards"
 authors = [
     { name = "Telman", email = "void.deref0@gmail.com" }

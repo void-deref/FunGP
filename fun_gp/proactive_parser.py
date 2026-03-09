@@ -105,7 +105,7 @@ class ProParser:
                         resp_code = value[tpdu_idx + 15]
                         print(f'\tResp status:    {resp_code:02x}')
                         if resp_code != por:
-                            raise ValueError(f'\tSCP80 Command Packet failure:\nexpected {response_status[por]}\ngot      {response_status[resp_code]}')
+                            raise ValueError(f'\n\tSCP80 Command Packet failure:\n\texpected: {response_status[por]}\n\tgot     : {response_status[resp_code]}')
                     
                     print(f'\tTP-UD:          {bytes_to_hex(value[tpdu_idx:])}')
 

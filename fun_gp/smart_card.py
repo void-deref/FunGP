@@ -28,7 +28,7 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         c_mac = self._retail_mac(cmd)
 
         cmd = cmd + c_mac
-        name = '(SM) ' + name
+        name = '(SCP02) ' + name
         return self.apdu_plain(cmd, expected_sw, name)
 
 
@@ -53,27 +53,40 @@ class SmartCard(Reader, SCP02, CardContentManagement):
             self.authenticated = True
 
 
-    def install_app_scp02(self, cap_path:str, applet_params:str=''):
+    def install_app_scp02(self, cap_path:str, app_params:str=''):
         """
         Install an applet through the SCP02 protocol.  
         
         :param cap_path: path to a cap file to be installed  
-        :param applet_params: by default passes applet's AID. Additional params
-        must be prepended with length value e.g. 'lv(pin) + lv(secret)' 
-        so that the resulting string will have the following form  
-        `[len][AID][len][pin][len][secret]`
+        :param install_params: by default passes applet's AID only. Additional params must
+        be prepended with length value e.g.:  
+        `lv(pin) + lv(secret)`
+        so that the resulting string will have the following form:  
+        `[len][AID] [len][pin] [len][secret]`
+        
         """
-
         cap_bytes, package_aid, applet_aid = self._parse_cap_file(cap_path)
 
-        if len(applet_params) != 0:
-            applet_params = lv(applet_aid) + applet_params
-        else:
-            applet_params = lv(applet_aid)
+        # INSTALL[for load]
+        for_load = self._compile_for_load(package_aid)
+        self.apdu_scp02(for_load, expected_sw = 0x9000, name = 'INSTALL[for load]')
+        
+        # LOAD
+        commands = self._compile_load(cap_bytes)
+        for next in commands:
+            self.apdu_scp02(next, expected_sw=0x9000, name='LOAD')
 
-        self._install_for_load(self.apdu_scp02, package_aid)
-        self._load(self.apdu_scp02, cap_bytes)
-        self._install_for_install(self.apdu_scp02, package_aid, applet_aid, applet_params)
+        print(f'***** CAP-file size *****')
+        print(f'{self.cap_file_size} bytes')
+
+        if len(app_params) != 0:
+            app_params = lv(applet_aid) + app_params
+        else:
+            app_params = lv(applet_aid)
+        
+        # INSTALL[for install and make selectable]
+        for_install = self._compile_for_install(package_aid, applet_aid, app_params)
+        self.apdu_scp02(for_install, expected_sw = 0x9000, name = 'INSTALL[for install and make selectable]')
 
 
     def uninstall_app_scp02(self, package_aid:str='', applet_aid:str='', sw:int = 0):
@@ -84,10 +97,12 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         :param package_aid: AID of a packed to be deleted with all its dependent applets.
         :param applet_aid: AID of an applet to be delete.
         """
+
         if len(package_aid) == 0 and len(applet_aid) == 0:
             raise ValueError('define either package or applet AID')
         
-        self._delete(self.apdu_scp02, package_aid, applet_aid, sw)
+        aid, cmd = self._compile_delete(package_aid, applet_aid, sw)
+        self.apdu_scp02(cmd, expected_sw = sw, name = f'UNINSTALL [{aid}]')
 
 
     def get_data(self):

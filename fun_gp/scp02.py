@@ -57,7 +57,6 @@ class SCP02:
         ext_auth_cmd = ext_auth_cmd + c_mac
         return ext_auth_cmd
         
-
     def _host_crypto(self, counter, card_challenge, host_challenge):
         auth_data = counter + card_challenge + host_challenge + [0x80] + [0] * 7
         auth_data = self._apply_3des_cbc(auth_data, self.session_enc)

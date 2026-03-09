@@ -3,6 +3,24 @@ from fun_gp.utils import hex_to_bytes, bytes_to_hex, lv
 from Crypto.Cipher import DES3, AES
 from Crypto.Hash import CMAC
 
+class SCP80Params:
+    def __init__(self, spi:str='1622', kic:int=0x49, tar:str='000000', por:int=0x00):
+        self.spi = hex_to_bytes(spi)
+        self.kic = kic
+        self.kid = kic
+        self.tar = hex_to_bytes(tar)
+        self.por = por
+    
+    def _build_list(self):
+        return  self.spi + [self.kic] + [self.kid] + self.tar + [self.por]
+
+    def __getitem__(self, index):
+        return self._build_list()[index]
+
+    def __len__(self):
+        return len(self._build_list())
+
+
 class SCP80:
     def __init__(self, iccid:str, path_to_card_deck:str):
         

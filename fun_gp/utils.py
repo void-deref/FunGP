@@ -9,11 +9,7 @@ def hex_to_bytes(ascii_str:str) -> list[int]:
     if len(clean_str) % 2 != 0:
         raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
 
-    try:
-        return list(bytes.fromhex(clean_str))
-    except ValueError as e:
-        raise ValueError(f'Non-hexadecimal character not allowed.')
-
+    return list(bytes.fromhex(clean_str))
 
 def bytes_to_hex(byte_data:list, uppercase=True) -> str:
     """

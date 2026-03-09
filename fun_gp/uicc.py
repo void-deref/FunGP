@@ -1,6 +1,8 @@
-from fun_gp import Reader, SCP80, CardContentManagement, SMSPP, CP, ProParser, SW_list
-from fun_gp.utils import decode_bcd, hex_to_bytes, bytes_to_hex, lv_asn
+from fun_gp import  Reader, SCP80, SCP80Params,  \
+                    CardContentManagement, SMSPP, \
+                    CP, ProParser, SW_list
 
+from fun_gp.utils import decode_bcd, hex_to_bytes, bytes_to_hex, lv
 from math import ceil
 
 class UICC(Reader, SCP80, CardContentManagement):
@@ -18,25 +20,17 @@ class UICC(Reader, SCP80, CardContentManagement):
         CardContentManagement.__init__(self)
 
     # The structure of ENVELOPE SMS-PP DOWNLOAD is described in ETSI 131 111, 7.1.1.2
-    def apdu_scp80(self, payload:str|list, spi:str=None, kic:int=None, kid:int=None, tar:str=None, expected_sw:int=0):
+    def apdu_scp80(self, payload:str|list, params:SCP80Params, expected_sw:int=0, name:str=''):
 
         if isinstance(payload, str):
             payload = hex_to_bytes(payload)
         
-        print(f'SCP80')
         cmd_pkt = CP(self.cntr, payload)
 
-        if spi != None:
-            cmd_pkt.ch.spi = hex_to_bytes(spi)
-
-        if kic != None:
-            cmd_pkt.ch.kic = kic
-        
-        if kid != None:
-            cmd_pkt.ch.kid = kid
-        
-        if tar != None:
-            cmd_pkt.ch.tar = hex_to_bytes(tar)
+        cmd_pkt.ch.spi = params.spi        
+        cmd_pkt.ch.kic = params.kic
+        cmd_pkt.ch.kid = params.kid
+        cmd_pkt.ch.tar = params.tar
 
         # The following code looks weird because the authors of ETSI 102 225 and 131 111
         # were smoking gas and not even passing it! Here the recursion takes place:
@@ -93,15 +87,17 @@ class UICC(Reader, SCP80, CardContentManagement):
 
         self._increment_cntr()
 
+        name = '(SCP80) ' + name
         parser = ProParser()
         for sms in sms_list:
+            print(f'{name}')
             response = self.envelope(sms[0:])
             self._print_scp80(sms)
             
             while response[-2] == 0x91:
                 response = self.fetch(response[-1])
                 # Trim last two bytes of SW.
-                term_resp = parser.parse(response[0:-2])
+                term_resp = parser.parse(response[0:-2], params.por)
                 response = self.terminal_response('8103' + bytes_to_hex(term_resp[0]) + '82028281 030100' + bytes_to_hex(term_resp[1]))
 
         actual_sw = int.from_bytes(response[-2:], byteorder='big')
@@ -242,3 +238,39 @@ class UICC(Reader, SCP80, CardContentManagement):
         iccid = decode_bcd(iccid[0:-2])
         print(f'Card\'s ICCID: {iccid}')
         return iccid
+
+
+    def install_app_scp80(self, cap_path:str, scp80_params:SCP80Params, app_params:str=''):
+        cap_bytes, package_aid, applet_aid = self._parse_cap_file(cap_path)
+        
+        # INSTALL[for load]
+        for_load = self._compile_for_load(package_aid)
+        self.apdu_scp80(for_load, scp80_params, name='INSTALL[for load]')
+
+        # LOAD
+        self.apdu_scp80(cap_bytes, scp80_params, expected_sw=0x9000, name='LOAD')
+
+        if len(app_params) != 0:
+            app_params = lv(applet_aid) + app_params
+        else:
+            app_params = lv(applet_aid)
+        
+        # INSTALL[for install and make selectable]
+        # SIM File Access and Toolkit Application Specific Parameters
+        ca_param = ('01 00' # Access Domain
+                    'FF'    # application Priority level
+                    '00'    # Max number of timers
+                    '00'    # Max text length for a menu entry
+                    '00'    # Max number of menu entries
+                    '00'    # Max number of channels
+                    '02 01 16' # MSL
+                    '03 424944') # TAR
+        ca_param = 'CA' + lv(ca_param)
+        
+        cf_param = 'CF 01 00' #Implicit selection parameter (present in combined [for install and make selectable])
+
+        sys_params = ca_param + cf_param
+        print(f'========================================================={sys_params}')
+
+        for_install = self._compile_for_install(package_aid, applet_aid, app_params, sys_params)
+        self.apdu_scp80(for_install, scp80_params, expected_sw = 0x9000, name = 'INSTALL[for install and make selectable]')
