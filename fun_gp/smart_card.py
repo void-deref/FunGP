@@ -53,7 +53,7 @@ class SmartCard(Reader, SCP02, CardContentManagement):
             self.authenticated = True
 
 
-    def install_app_scp02(self, cap_path:str, app_params:str=''):
+    def install_app_scp02(self, cap_path:str, app_params:str='', sys_params: str = ''):
         """
         Install an applet through the SCP02 protocol.  
         
@@ -83,14 +83,9 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
         print(f'***** CAP-file size *****')
         print(f'{self.cap_file_size} bytes.')
-
-        if len(app_params) != 0:
-            app_params = lv(applet_aid) + app_params
-        else:
-            app_params = lv(applet_aid)
         
         # INSTALL[for install and make selectable]
-        for_install = self._compile_for_install(package_aid, applet_aid, app_params)
+        for_install = self._compile_for_install(package_aid, applet_aid, app_params, sys_params)
         self.apdu_scp02(for_install, expected_sw = 0x9000, name = 'INSTALL[for install and make selectable]')
 
 

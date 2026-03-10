@@ -108,8 +108,11 @@ class CardContentManagement:
             lv(package_aid) +
             lv(applet_aid) +
             lv(applet_aid) +
-            '0100' +
-            lv('C9' + lv(app_params) + 'EF' + lv(sys_params)) + '00'
+            '0100' +            # privileges
+            lv(
+                'C9' + lv(app_params)  +
+                'EF' + lv(sys_params)) +
+            '00'
         )
         # 84E60C00 37 05 A000000082 0BA00000008253696D706C65 0BA00000008253696D706C65 0100 C90C0BA00000008253696D706C6500E2D3AF0A2B4B20EC
         print(f'Package AID: {package_aid}\nApplet AID:  {applet_aid}\n')

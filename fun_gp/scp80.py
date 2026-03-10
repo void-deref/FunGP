@@ -4,7 +4,7 @@ from Crypto.Cipher import DES3, AES
 from Crypto.Hash import CMAC
 
 class SCP80Params:
-    def __init__(self, spi:str='1622', kic:int=0x09, tar:str='000000', por:int=0x00):
+    def __init__(self, spi:str='1622', kic:int=0x49, tar:str='000000', por:int=0x00):
         self.spi = hex_to_bytes(spi)
         self.kic = kic
         self.kid = kic

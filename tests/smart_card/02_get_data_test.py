@@ -1,8 +1,7 @@
 from fun_gp import SmartCard
 from fun_gp.utils import lv
 
-# known_readers = ['ACS ACR39U ICC Reader 0', 'ACS ACR39U ICC Reader 00 00']
-known_readers = ['']
+known_readers = ['ACS ACR39U ICC Reader 0', 'ACS ACR39U ICC Reader 00 00']
 
 isd_default_keys = ["404142434445464748494A4B4C4D4E4F",
                     "404142434445464748494A4B4C4D4E4F",

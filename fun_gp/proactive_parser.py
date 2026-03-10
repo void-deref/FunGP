@@ -120,7 +120,7 @@ class ProParser:
                 case 0x0F | 0x8f: # Item | eCAT client identity
                     item_str = bytes_to_hex(value[1:])
                     decoded = decode_ucs2(item_str)
-                    print(f'\titem {value[0]:02x}: {decoded} ({bytes_to_hex(value)})')
+                    print(f'\titem {value[0]:02x}: {decoded}')
 
                 case 0x10 | 0x90: # Item identifier | Encapsulated envelope type
                     pass
