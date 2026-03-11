@@ -244,7 +244,11 @@ class UICC(Reader, SCP80, CardContentManagement):
         return iccid
 
 
-    def install_app_scp80(self, cap_path:str, scp80_params:SCP80Params, app_params:str=''):
+    def install_app_scp80(self, cap_path:str, scp80_params:SCP80Params, app_params:str='', sys_params: str = ''):
+        """
+        Installs an applet via SCP80 protocol.  
+        Implementation details and requirementscan be found in ETSI 102 225, 102 226 and 131 111.
+        """
         cap_bytes, package_aid, applet_aid = self._parse_cap_file(cap_path)
         
         # INSTALL[for load]
@@ -253,28 +257,14 @@ class UICC(Reader, SCP80, CardContentManagement):
 
         # LOAD
         self.apdu_scp80(cap_bytes, scp80_params, expected_sw=0x9000, name='LOAD')
-
-        if len(app_params) != 0:
-            app_params = lv(applet_aid) + app_params
-        else:
-            app_params = lv(applet_aid)
         
-        # INSTALL[for install and make selectable]
-        # SIM File Access and Toolkit Application Specific Parameters
-        ca_param = ('01 00' # Access Domain
-                    'FF'    # application Priority level
-                    '00'    # Max number of timers
-                    '00'    # Max text length for a menu entry
-                    '00'    # Max number of menu entries
-                    '00'    # Max number of channels
-                    '02 01 16' # MSL
-                    '03 424944') # TAR
-        ca_param = 'CA' + lv(ca_param)
-        
-        cf_param = 'CF 01 00' #Implicit selection parameter (present in combined [for install and make selectable])
-
-        sys_params = ca_param + cf_param
-        print(f'========================================================={sys_params}')
+        # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Ln' is greater than 'self.cap_file_size'.
+        # The difference is C * N + T, where
+        # C - the length of CMAC,
+        # N - number of LOAD commands,
+        # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
+        print(f'***** CAP-file size *****')
+        print(f'{self.cap_file_size} bytes.')
 
         for_install = self._compile_for_install(package_aid, applet_aid, app_params, sys_params)
         self.apdu_scp80(for_install, scp80_params, expected_sw = 0x9000, name = 'INSTALL[for install and make selectable]')
