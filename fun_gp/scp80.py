@@ -33,6 +33,7 @@ class SCP80:
         self.kid_key = hex_to_bytes(self.curr_card.kid)
         self.kik_key = hex_to_bytes(self.curr_card.kik)
         self.cntr    = hex_to_bytes(self.curr_card.cntr)
+        self.set_num = int(self.curr_card.number, 16)
 
 
     def __del__(self):

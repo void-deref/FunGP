@@ -188,3 +188,105 @@ def decode_ucs2(input:str|list) -> str:
             res =  input[1:].decode('latin-1')
     return res
 
+
+
+def calculate_luhn_checksum(iccid_base):
+    """
+    Вычисляет контрольную цифру для ICCID (алгоритм Луна).
+    iccid_base: строка с цифрами (обычно первые 18 цифр)
+    """
+    # Убеждаемся, что работаем только с цифрами
+    digits = [int(d) for d in str(iccid_base) if d.isdigit()]
+    
+    # Итерируемся справа налево
+    # Каждую ПЕРВУЮ цифру (если считать с конца перед добавлением чек-суммы) удваиваем
+    # В алгоритме Луна для ICCID удваиваются цифры на нечетных позициях с конца
+    total_sum = 0
+    for i, val in enumerate(reversed(digits)):
+        if i % 2 == 0:
+            doubled = val * 2
+            total_sum += doubled if doubled <= 9 else doubled - 9
+        else:
+            total_sum += val
+            
+    # Находим, сколько не хватает до ближайшего десятка
+    checksum = (10 - (total_sum % 10)) % 10
+    return checksum
+
+
+def parse_card_resources_obj(response:list):
+
+    header_tag = int.from_bytes(response[0:2])
+    if header_tag != 0xff21:
+        raise ValueError(f'Expected \'FF21\', but got {header_tag:04x}')
+    
+    offset = 0
+    total_length = response[2]
+    value        = response[3:-2]
+
+    while offset < total_length:
+        tag     = value[offset]
+        offset += 1
+        length  = value[offset]
+        offset += 1
+        data    = value[offset: offset + length]
+
+        match tag:
+            case 0x81:
+                print(f'total apps installed: {int.from_bytes(data)}')
+            case 0x82:
+                print(f'free NVM: {int.from_bytes(data)}')
+            case 0x83:
+                print(f'free RAM: {int.from_bytes(data)}')
+        offset += length
+
+
+def parse_status(data:list):
+    
+    offset = 0
+    total_length = len(data)
+
+    while offset < total_length:
+        if data[offset] != 0xE3:
+            raise ValueError(f'In Expect \'E3\' header tag, but got {data[0]:02x}')
+        
+        offset   += 1
+        length_E3 = data[offset]
+
+        offset  += 1
+        content  = data[offset: offset + length_E3]
+        content_len = len(content)
+        sub_offset  = 0
+
+        while sub_offset < content_len:
+            tag = content[sub_offset]
+            sub_offset += 1
+            
+            if tag == 0x9f:
+                sub_offset += 1
+            
+            sub_length  = content[sub_offset]
+            sub_offset += 1
+            value       = bytes_to_hex(content[sub_offset: sub_offset + sub_length])
+            match tag:
+                case 0x4F:
+                    print(f'\tAID: {value}')
+                case 0x9F:
+                    print(f'\tLife Cycle State: {value}')
+                case 0x84:
+                    print(f'\tNext Executable Module AID: {value}')
+                case 0xC4:
+                    print(f'\tApplication\'s Executable Load File AID: {value}')
+                case 0xC5:
+                    print(f'\tPrivileges: {value}')
+                case 0xCC:
+                    print(f'\tAssociated Security Domain\'s AID: {value}')
+                case 0xCE:
+                    print(f'\tExecutable Load File Version Number: {value}')
+                case 0xCF:
+                    print(f'\tNext Implicit Selection Parameter: {value}')
+                case _ :
+                        print(f'unknown tag \'{tag:02x}\'')
+            sub_offset += sub_length
+        offset += length_E3
+    print('=================================')

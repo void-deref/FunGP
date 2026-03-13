@@ -244,19 +244,21 @@ class Reader:
 
 
 class Card:
-    def __init__(self, cntr:str, key_set:list[str]):
-        if len(key_set) != 3 or len(cntr) != 10:
-            raise ValueError(f'Either cntr or key_set have wrong length')
+    def __init__(self, cntr:str, key_set:list[str], number:str = "01"):
+        if len(key_set) != 3 or len(cntr) != 10 or len(number) != 2:
+            raise ValueError(f'Either cntr, key_set or version have wrong length')
         
         self.cntr = cntr
-        self.kic = key_set[0]
-        self.kid = key_set[1]
-        self.kik = key_set[2]
-    
+        self.kic  = key_set[0]
+        self.kid  = key_set[1]
+        self.kik  = key_set[2]
+        self.number = number
+
     def to_dict(self):
         return {
-            'cntr'   : self.cntr,
-            'key_set': [self.kic,self.kid,self.kik]
+            'cntr': self.cntr,
+            'key_set': [self.kic, self.kid, self.kik],
+            'number': self.number
         }
 
 
@@ -264,14 +266,17 @@ class CardDeck:
     def __init__(self, path_to_card_deck:str):
         self.path = path_to_card_deck
 
-    def update(self, card_deck:dict[Card]):
+    def update(self, card_deck:dict[str, Card]):
         with open(self.path, 'w') as jfile:
-            json.dump({iccid:card.to_dict() for iccid, card in card_deck.items()}, jfile, indent=4)
+            json.dump({iccid: card.to_dict() for iccid, card in card_deck.items()}, jfile, indent=4)
 
-    def load(self) -> dict[Card]:
-        card_deck:dict[Card] = {}
-        with open(self.path, 'r') as jfile:
-            raw_json  = json.load(jfile)
-            card_deck = {str(iccid): Card(**card) for iccid, card in raw_json.items()}
+    def load(self) -> dict[str, Card]:
+        card_deck:dict[str, Card] = {}
+        try:
+            with open(self.path, 'r') as jfile:
+                raw_json  = json.load(jfile)
+                card_deck = {str(iccid): Card(**card) for iccid, card in raw_json.items()}
+        except FileNotFoundError:
+            return {}
         
         return card_deck
