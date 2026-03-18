@@ -1,8 +1,8 @@
 from fun_gp import  Reader, SCP80, SCP80Params,  \
                     CardContentManagement, SMSPP, \
-                    CP, ProParser, SW_list
+                    CP, ProParser, SW_list, InstallParams
 
-from fun_gp.utils import decode_bcd, hex_to_bytes, bytes_to_hex, lv
+from fun_gp.utils import decode_bcd, hex_to_bytes, bytes_to_hex
 from math import ceil
 
 class UICC(Reader, SCP80, CardContentManagement):
@@ -268,3 +268,54 @@ class UICC(Reader, SCP80, CardContentManagement):
 
         for_install = self._compile_for_install(package_aid, applet_aid, app_params, sys_params)
         self.apdu_scp80(for_install, scp80_params, expected_sw = 0x9000, name = 'INSTALL[for install and make selectable]')
+
+
+    def uninstall_app_scp80(self, scp80_params:SCP80Params, package_aid:str='', applet_aid:str='', sw:int = 0):
+        
+        if len(package_aid) == 0 and len(applet_aid) == 0:
+            raise ValueError('define either package or applet AID')
+        
+        aid, cmd = self._compile_delete(package_aid, applet_aid, sw)
+        self.apdu_scp80(cmd, scp80_params, expected_sw=0x9000, name=f'DELETE [{aid}]')
+
+
+    def install_app_plain(self, cap_path:str, install_params:InstallParams, sd_aid:str=None):
+        cap_bytes, package_aid, applet_aid = self._parse_cap_file(cap_path)
+
+        # INSTALL[for load]
+        for_load = self._compile_for_load(package_aid, sd_aid)
+        self.apdu_plain(for_load, expected_sw = 0x9000, name = 'INSTALL[for load]')
+
+        # LOAD
+        commands = self._compile_load(cap_bytes)
+        for next in commands:
+            self.apdu_plain(next, expected_sw=0x9000, name='LOAD')
+        
+        # INSTALL[for install and make selectable]
+        for_install = self._compile_for_install(package_aid, applet_aid, install_params)
+        self.apdu_plain(for_install, expected_sw = 0x9000, name = 'INSTALL[for install and make selectable]')
+
+        # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Ln' is greater than 'self.cap_file_size'.
+        # The difference is C * N + T, where
+        # C - the length of CMAC,
+        # N - number of LOAD commands,
+        # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
+        print(f'***** CAP-file info *****')
+        print(f'size:        {self.cap_file_size} bytes.')
+        print(f'Package AID: {package_aid}\nApplet AID:  {applet_aid}\n')
+
+
+    def uninstall_app_plain(self, package_aid:str='', applet_aid:str='', sw:int = 0):
+        """
+        Uninstalls previously installed applet. Note that uninstalling a package will
+        lead to removing all relative applets too.
+        
+        :param package_aid: AID of a packed to be deleted with all its dependent applets.
+        :param applet_aid: AID of an applet to be delete.
+        """
+
+        if len(package_aid) == 0 and len(applet_aid) == 0:
+            raise ValueError('define either package or applet AID')
+        
+        aid, cmd = self._compile_delete(package_aid, applet_aid, sw)
+        self.apdu_plain(cmd, expected_sw = sw, name = f'DELETE [{aid}]')

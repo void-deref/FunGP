@@ -1,5 +1,5 @@
-from fun_gp import Reader, SCP02, CardContentManagement, SW_list
-from fun_gp.utils import lv, hex_to_bytes
+from fun_gp import Reader, SCP02, CardContentManagement, InstallParams
+from fun_gp.utils import lv_hex, hex_to_bytes
 
 from Crypto.Cipher import DES3, DES
 
@@ -53,7 +53,7 @@ class SmartCard(Reader, SCP02, CardContentManagement):
             self.authenticated = True
 
 
-    def install_app_scp02(self, cap_path:str, app_params:str='', sys_params: str = ''):
+    def install_app_scp02(self, cap_path:str, install_params:InstallParams):
         """
         Install an applet through the SCP02 protocol.  
         
@@ -85,7 +85,7 @@ class SmartCard(Reader, SCP02, CardContentManagement):
         print(f'{self.cap_file_size} bytes.')
         
         # INSTALL[for install and make selectable]
-        for_install = self._compile_for_install(package_aid, applet_aid, app_params, sys_params)
+        for_install = self._compile_for_install(package_aid, applet_aid, install_params)
         self.apdu_scp02(for_install, expected_sw = 0x9000, name = 'INSTALL[for install and make selectable]')
 
 

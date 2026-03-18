@@ -37,8 +37,8 @@ class ProParser:
                         raise ValueError(f'the length of \'Command details\' object must be \'3\', but got {length}.')
                     else:
                         print(f'\tcommand number: {value[0]:02x}')
-                        print(f'\tcommand type:   {type_of_command[value[1]]}')
-                        print(f'\tqualifier:      {value[2]:02x} (see ETSI 102 223, c. 8.6)')
+                        print(f'\tcommand type  : {type_of_command[value[1]]}')
+                        print(f'\tqualifier     : {value[2]:02x} (see ETSI 102 223, c. 8.6)')
                     command_type[0] = value # this value will be used in TERMINAL RESPONSE
                 
                 case 0x02 | 0x82: # Device identity, (ETSI 102 223, 8.7)
@@ -49,7 +49,8 @@ class ProParser:
                     source      = entities[value[0]]
                     destination = entities[value[1]]
 
-                    print(f'\tfrom:           {source}\n\tto:             {destination}')
+                    print(f'\tfrom          : {source}')
+                    print(f'\tto            : {destination}')
 
                 case 0x03 | 0x83: # Result (102 223, 8.12)
                     pass
@@ -112,14 +113,13 @@ class ProParser:
                 case 0x0C | 0x8c: # Cell Broadcast page | PDU session establishment parameters
                     pass
                 case 0x0D | 0x8d: # Text string
-                    # text_str = bytes_to_hex(value)
                     decoded = decode_ucs2(value)
-                    print(f'\tMessage {value[0]:02x}: {decoded}')
+                    print(f'\tDCS           : {value[0]:02x}')
+                    print(f'\tMessage       : {decoded}')
                 case 0x0E | 0x8e: # Tone | eCAT client profile
                     pass
                 case 0x0F | 0x8f: # Item | eCAT client identity
-                    item_str = bytes_to_hex(value[1:])
-                    decoded = decode_ucs2(item_str)
+                    decoded = decode_ucs2(value[1:])
                     print(f'\titem {value[0]:02x}: {decoded}')
 
                 case 0x10 | 0x90: # Item identifier | Encapsulated envelope type

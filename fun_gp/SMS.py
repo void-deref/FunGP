@@ -1,4 +1,4 @@
-from fun_gp.utils import lv, hex_to_bytes, bytes_to_hex, len_asn, encode_bcd
+from fun_gp.utils import lv_list, lv_hex, hex_to_bytes, bytes_to_hex, len_asn, encode_bcd
 
 class CH: # TP-Command-Header
     def __init__(self, cntr:str|list):
@@ -222,7 +222,7 @@ class SMSPP:
         self.device_identities = hex_to_bytes('8202 8381')
         
         # TON - international number; NPI - ISDN
-        self.address    = hex_to_bytes('03' + lv('91' + '77f7'))
+        self.address    = [0x06] + lv_list('91' + '77f7')
         
         self.tpdu = SMS_TPDU(user_data, is_concat, is_secured)
 

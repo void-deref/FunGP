@@ -1,5 +1,5 @@
 from fun_gp import Card, CardDeck
-from fun_gp.utils import hex_to_bytes, bytes_to_hex, lv
+from fun_gp.utils import hex_to_bytes, bytes_to_hex, lv_hex
 from Crypto.Cipher import DES3, AES
 from Crypto.Hash import CMAC
 
@@ -24,8 +24,8 @@ class SCP80Params:
 class SCP80:
     def __init__(self, iccid:str, path_to_card_deck:str):
         
-        self.iccid:str            = ''.join(c for c in iccid if c.isalnum()) # trim the white spaces (if any)
-        self.db:CardDeck          = CardDeck(path_to_card_deck)
+        self.iccid:str   = ''.join(c for c in iccid if c.isalnum()) # trim the white spaces (if any)
+        self.db:CardDeck = CardDeck(path_to_card_deck)
         self.card_deck:dict[Card] = self.db.load()
 
         self.curr_card:Card = self.card_deck.get(self.iccid)
@@ -33,7 +33,7 @@ class SCP80:
         self.kid_key = hex_to_bytes(self.curr_card.kid)
         self.kik_key = hex_to_bytes(self.curr_card.kik)
         self.cntr    = hex_to_bytes(self.curr_card.cntr)
-        self.set_num = int(self.curr_card.number, 16)
+        self.key_id  = int(self.curr_card.key_id, 16)
 
 
     def __del__(self):

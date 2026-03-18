@@ -1,11 +1,11 @@
 
-def hex_to_bytes(ascii_str:str) -> list[int]:
+def hex_to_bytes(hex_str:str) -> list[int]:
     """
     Converts an input HEX-string into bytes.\n
     Raises exception if the given string will contain a value other than [0-9][a-f][A-F].\n
     :param ascii_str: a string input.\n
     """
-    clean_str = ''.join(c for c in ascii_str if c.isalnum())
+    clean_str = ''.join(c for c in hex_str if c.isalnum())
     if len(clean_str) % 2 != 0:
         raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
 
@@ -39,8 +39,21 @@ def parse_tlv(target_tag:int, buffer:list) -> list[int]:
             idx += length
     return []
 
+def lv_list(hex_str:str|list) -> list[int]:
 
-def lv(hex_str:str) -> str:
+    if isinstance(hex_str, list):
+        hex_str = bytes_to_hex(hex_str)
+    
+    clean_str = ''.join(c for c in hex_str if c.isalnum())
+    if len(clean_str) % 2 != 0:
+        raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
+    
+    str_len = len(clean_str) // 2
+
+    return list(bytes.fromhex(f'{str_len:02x}' + clean_str))
+
+
+def lv_hex(hex_str:str|list) -> str:
     """
     lv stands for 'length-value' taken from TLV concept.  
     This function takes a hex string as an input and returns it without
@@ -49,6 +62,10 @@ def lv(hex_str:str) -> str:
     :param hex_str: a string with hexadecimal values
     :returns: length + value string in hex
     """
+
+    if isinstance(hex_str, list):
+        hex_str = bytes_to_hex(hex_str)
+    
     clean_str = ''.join(c for c in hex_str if c.isalnum())
     if len(clean_str) % 2 != 0:
         raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
@@ -178,10 +195,10 @@ def decode_ucs2(input:str|list) -> str:
                 else:
                     # otherwise it's a regualr 7-bit GSM default alphabet character
                     result.append(chr(char_byte))
-            res =  "".join(result)
+            res =  ''.join(result)
             
         case 0x82:
-            res =  "Parsing for 0x82 (offset-based) not implemented"
+            res =  'Parsing for 0x82 (offset-based) not implemented'
             
         case _:
             # По умолчанию GSM 7/8 bit
@@ -214,7 +231,7 @@ def calculate_luhn_checksum(iccid_base):
     return checksum
 
 
-def parse_card_resources_obj(response:list):
+def parse_card_resources(response:list):
 
     header_tag = int.from_bytes(response[0:2])
     if header_tag != 0xff21:
@@ -230,7 +247,6 @@ def parse_card_resources_obj(response:list):
         length  = value[offset]
         offset += 1
         data    = value[offset: offset + length]
-
         match tag:
             case 0x81:
                 print(f'total apps installed: {int.from_bytes(data)}')
@@ -240,6 +256,37 @@ def parse_card_resources_obj(response:list):
                 print(f'free RAM: {int.from_bytes(data)}')
         offset += length
 
+lcs_dict = {
+    '01':'OP_READY',
+    '07':'INITIALIZED',
+    '0F':'SECURED',
+    '7F':'CARD_LOCKED',
+    'FF':'TERMINATED',
+}
+
+aid_dict = {
+    'A0000001510000'  :'ISD AID',
+    'A000000151000000':'ISD AID',
+
+    'A0000000620001':'java.lang',
+    'A0000000620002':'java.io',
+    'A0000000620003':'java.rmi',
+    'A0000000620101':'javacard.framework',
+    'A0000000620102':'javacard.security',
+    'A0000000620201':'javacardx.crypto',
+    
+    'A0000000090003FFFFFFFF8910710001':'sim.access',
+    'A0000000090003FFFFFFFF8910710002':'sim.toolkit',
+    'A0000000090005FFFFFFFF8911000000':'uicc.access',
+    'A0000000090005FFFFFFFF8912000000':'uicc.toolkit',
+    'A0000000090005FFFFFFFF8913000000':'uicc.system',
+    'A0000000090005FFFFFFFF8911010000':'uicc.access.fileadministration',
+    'A0000000090005FFFFFFFF8911020000':'uicc.access.bertlvfile',
+    'A0000000871005FFFFFFFF8913100000':'uicc.usim.access',
+    'A0000000871005FFFFFFFF8913200000':'uicc.usim.toolkit',
+    'A0000000871005FFFFFFFF8913300000':'uicc.usim.geolocation',
+    'A0000000871005FFFFFFFF8913400000':'uicc.usim.suci',
+}
 
 def parse_status(data:list):
     
@@ -270,23 +317,23 @@ def parse_status(data:list):
             value       = bytes_to_hex(content[sub_offset: sub_offset + sub_length])
             match tag:
                 case 0x4F:
-                    print(f'\tAID: {value}')
+                    print(f'\tAID: {value} ({aid_dict.get(value, '?')})')
                 case 0x9F:
-                    print(f'\tLife Cycle State: {value}')
+                    print(f'\tLCS: {lcs_dict.get(value, '?')}')
                 case 0x84:
-                    print(f'\tNext Executable Module AID: {value}')
+                    print(f'\tApplet AID: {value} ({aid_dict.get(value, '?')})')
                 case 0xC4:
-                    print(f'\tApplication\'s Executable Load File AID: {value}')
+                    print(f'\tCAP file AID: {value} ({aid_dict.get(value, '?')})')
                 case 0xC5:
                     print(f'\tPrivileges: {value}')
                 case 0xCC:
-                    print(f'\tAssociated Security Domain\'s AID: {value}')
+                    print(f'\tAssociated Security Domain\'s AID: {value} ({aid_dict.get(value, '?')})')
                 case 0xCE:
-                    print(f'\tExecutable Load File Version Number: {value}')
+                    print(f'\tCAP file Version Number: {value}')
                 case 0xCF:
-                    print(f'\tNext Implicit Selection Parameter: {value}')
+                    print(f'\tImplicit Selection Parameter: {value}')
                 case _ :
                         print(f'unknown tag \'{tag:02x}\'')
             sub_offset += sub_length
         offset += length_E3
-    print('=================================')
+    print('=================================\n')

@@ -244,21 +244,21 @@ class Reader:
 
 
 class Card:
-    def __init__(self, cntr:str, key_set:list[str], number:str = "01"):
-        if len(key_set) != 3 or len(cntr) != 10 or len(number) != 2:
+    def __init__(self, cntr:str, key_set:list[str], key_id:str = "01"):
+        if len(key_set) != 3 or len(cntr) != 10 or len(key_id) != 2:
             raise ValueError(f'Either cntr, key_set or version have wrong length')
         
         self.cntr = cntr
         self.kic  = key_set[0]
         self.kid  = key_set[1]
         self.kik  = key_set[2]
-        self.number = number
+        self.key_id = key_id
 
     def to_dict(self):
         return {
             'cntr': self.cntr,
             'key_set': [self.kic, self.kid, self.kik],
-            'number': self.number
+            'key_id': self.key_id
         }
 
 
