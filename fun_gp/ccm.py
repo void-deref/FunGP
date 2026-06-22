@@ -45,76 +45,10 @@ class ForLoad:
         return len(self._build_list())
 
 
-class SIMParams:
-    def __init__(self, msl:str='16', tar:str='544152'):
-        """
-        :param msl: exactly as SPI.1 byte, e.g. '16'
-        :param tar: a TAR value represented as hex string
-        """
-        self.tag           = [0xCA]
-        self.access_domain = [0x01, 0x00] # full access
-        self.priority      = [0xFF]       # lowest priority
-        self.timers        = [0x00]       # no timers needed for this applet
-        self.text_length   = [0x00]       # Applet hasn't menu, thus there is no need for text length attribute
-        self.menu_entries  = [0x00]       # No menu entries
-        self.channels      = [0x01]       # one BIP channel required only
-        self.msl           = lv_list('01' + msl) # Minimum SPI1
-        self.tar           = lv_list(tar)
-        
-        self.tag = [0xEF] + lv_list(self.tag +
-                                lv_list(self.access_domain + self.priority + self.timers + 
-                                    self.text_length + self.menu_entries + self.channels + 
-                                    self.msl + self.tar)
-                                 + [0xCF, 0x00])
-    def _build_list(self):
-        return self.tag
-
-    def __getitem__(self, index):
-        return self._build_list()[index]
-
-    def __len__(self):
-        return len(self._build_list())
-    
-
-class UICCParams:
-    def __init__(self, msl:str='16', tar:str='544152'):
-        """
-        :param msl: exactly as SPI.1 byte, e.g. '16'
-        :param tar: a TAR value represented as hex string
-        """
-        self.priority      = [0xFF]       # lowest priority
-        self.timers        = [0x00]       # no timers needed for this applet
-        self.text_length   = [0x00]       # Applet hasn't menu, thus there is no need for text length attribute
-        self.menu_entries  = [0x00]       # No menu entries
-        self.channels      = [0x01]       # one BIP channel required only
-        self.msl           = lv_list('01' + msl) # Minimum SPI1
-        self.tar           = lv_list(tar)
-        self.services      = [0x00]       # services
-
-        self.toolkit_params = [0x80] + lv_list(self.priority + self.timers + self.text_length + self.menu_entries +
-                                               self.channels + self.msl + self.tar + self.services)
-        
-        self.dap            = [0xC3, 0x00]
-        self.access_params  = [0x81, 0x04, 0x00, 0x01, 0x00, 0x00] # full access
-        self.admin_access   = [0x82, 0x04, 0x00, 0x01, 0x00, 0x00] # full access
-
-        self. tag = [0xEA] + lv_list(self.toolkit_params + self.dap + self.access_params + self.admin_access)
-
-    def _build_list(self):
-        return self. tag
-
-    def __getitem__(self, index):
-        return self._build_list()[index]
-
-    def __len__(self):
-        return len(self._build_list())
-
-
-
 class InstallParams:
-    def __init__(self, app_params:str=None, sys_params:SIMParams|UICCParams|list[int]=None):
-        self.app_params  = [0xC9] + lv_list(app_params) if app_params  != None else [0xC9, 0x00]
-        self.sys_params  = sys_params[0:] if sys_params != None else []
+    def __init__(self, app_params:str=None):
+        self.app_params  = [0xC9] + lv_list(app_params) if app_params != None else [0xC9, 0x00]
+        self.sys_params = [0xEF, 0x00]
 
     def _build_list(self):
         return self.app_params + self.sys_params
@@ -246,6 +180,6 @@ Components = [
     "StaticField.cap",
     "Export.cap",
     "ConstantPool.cap",
-    "RefLocation.cap", #(optional)
-    "Descriptor.cap", #(optional)
+    # "RefLocation.cap", #(optional)
+    # "Descriptor.cap", #(optional)
 ]
