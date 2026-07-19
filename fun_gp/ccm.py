@@ -82,65 +82,64 @@ class ForInstall:
         return len(self._build_list())
 
 
-class CardContentManagement:
+class CCM:
+    """ Card Content Management (see GlobalPlatfrom 2.3)"""
     def __init__(self):
         self.cap_file_size = 0
+    
 
-    def _compile_for_load(self, package_aid:str, sd_aid:str=None) -> str:
+    def make_cmd_install_for_load(self, package_aid:str, sd_aid:str=None) -> str:
         """
         GP 2.3, clause 11.5   
         
         Initiates various steps required for Card Content management.  
         More details can be found in README.md.
         """
-
         for_load = ForLoad(package_aid=package_aid, sd_aid=sd_aid, load_params=LoadParams())
         compiled = '80E6 0200 ' + lv_hex(bytes_to_hex(for_load[0:]))
-
         return compiled
 
-    def _compile_load(self, cap_bytes:list) -> list[str]:
+
+    def make_cmd_load(self, cap_bytes:list, chunk_size:int=247, add_cmd='') -> list[str]:
         """
         Transmits the Load File (.cap file).  
         More details can be found in README.md.
         """
-        cap_len_asn = len_asn(cap_bytes)
-        cap_len_asn = hex_to_bytes(cap_len_asn)
-
-        cap_bytes = [0xC4] + cap_len_asn + cap_bytes
- 
-        chunk_size = 247
-        total_len  = len(cap_bytes)
+        cap_bytes = 'C4' + lv_asn(cap_bytes) # mind the ASN format of the length field
+        cap_bytes = hex_to_bytes(cap_bytes)
+        total_len = len(cap_bytes)
         p2 = 0
-        compiled_chunk = []
+        cmd_list = []
         for i in range(0, total_len, chunk_size):
             
             if i + chunk_size > total_len:
                 cmd = f'80E8 80{p2:02x} '
             else:
                 cmd = f'80E8 00{p2:02x} '
-            compiled_chunk.append(cmd + lv_hex(bytes_to_hex(cap_bytes[i:i+chunk_size])))
+            cmd_list.append(cmd + lv_hex(cap_bytes[i:i+chunk_size]) + add_cmd)
             p2 += 1
 
-        return compiled_chunk
+        return cmd_list
 
-    def _compile_for_install(self, package_aid:str, applet_aid:str, install_params:InstallParams):
 
+    def make_cmd_install_for_install(self, package_aid:str, applet_aid:str, install_params:InstallParams):
         install_params = ForInstall(package_aid, applet_aid, install_params)
         cmd = '80E6 0C00' + lv_hex(install_params[0:])
         return cmd
 
-    def _compile_delete(self, package_aid:str='', applet_aid:str='', sw:int=0):
-        aid = applet_aid
-        p2  = 0x00
-        if len(package_aid) != 0:
-            aid = package_aid
-            p2 =0x80
-        
-        cmd = f'80E4 00{p2:02x}' + lv_hex('4F' + lv_hex(aid))
-        return aid, cmd
 
-    def _parse_cap_file(self, cap_path:str):
+    def make_cmd_delete(self, pkg_aid:str=None, app_aid:str=None):
+        
+        if pkg_aid is None and app_aid is None:
+            raise ValueError(f'Either PKG AID or APPLET AID must be defined')
+        
+        # the package AID has priority over applet AID.
+        target_aid, p2 = (pkg_aid, 0x80) if pkg_aid else (app_aid, 0x00)
+        cmd = f'80E4 00{p2:02x}' + lv_hex('4F' + lv_hex(target_aid))
+        return cmd
+
+
+    def decomposite_cap_file(self, cap_path:str):
         raw_bytes = None
         cap_bytes = []
         package_aid = []

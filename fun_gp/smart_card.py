@@ -1,4 +1,4 @@
-from fun_gp import Reader, SCP02, CardContentManagement, InstallParams
+from fun_gp import Reader, SCP02, CCM, InstallParams
 from fun_gp.utils import lv_hex, hex_to_bytes
 
 from Crypto.Cipher import DES3, DES
@@ -6,11 +6,11 @@ from Crypto.Cipher import DES3, DES
 import os
 
 
-class SmartCard(Reader, SCP02, CardContentManagement):
+class SmartCard(Reader, SCP02, CCM):
     def __init__(self, known_readers:list, key_set:list=['','','']):
         Reader.__init__(self, known_readers)
         SCP02.__init__(self, key_set)
-        CardContentManagement.__init__(self)
+        CCM.__init__(self)
 
 
     def apdu_scp02(self, cmd:list|str, expected_sw:int = 0, name:str = None):
