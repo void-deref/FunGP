@@ -3,7 +3,7 @@ from Crypto.Cipher import DES3, DES
 
 
 class SCP02:
-    def __init__(self, key_set:list[str, str, str]):
+    def __init__(self, key_set:list[str]):
         
         self.enc = key_set[0]
         self.mac = key_set[1]
