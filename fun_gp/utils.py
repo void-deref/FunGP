@@ -1,15 +1,20 @@
 
+def __remove_whitespaces(plain_str:str) -> str:
+    """Helper function intended to recude repeating code"""
+    clean_str = ''.join(c for c in plain_str if c.isalnum())
+    if len(clean_str) % 2 != 0:
+        raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
+    return clean_str
+
 def hex_to_bytes(hex_str:str) -> list[int]:
     """
     Converts an input HEX-string into bytes.\n
     Raises exception if the given string will contain a value other than [0-9][a-f][A-F].\n
     :param ascii_str: a string input.\n
     """
-    clean_str = ''.join(c for c in hex_str if c.isalnum())
-    if len(clean_str) % 2 != 0:
-        raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
-
+    clean_str = __remove_whitespaces(hex_str)
     return list(bytes.fromhex(clean_str))
+
 
 def bytes_to_hex(byte_data:list, uppercase=True) -> str:
     """
@@ -20,37 +25,19 @@ def bytes_to_hex(byte_data:list, uppercase=True) -> str:
     return ''.join(fmt.format(x) for x in b)
 
 
-def parse_tlv(target_tag:int, buffer:list) -> list[int]:
-    tag    = 0
-    length = 1
-    idx = 2
-
-    if buffer[0] != 0x61:
-        return []
-    
-    while idx < buffer[1]:
-        tag    = buffer[idx]
-        idx += 1
-        length = buffer[idx]
-        idx += 1
-        if tag == target_tag:
-            return buffer[idx: idx + length]
-        else:
-            idx += length
-    return []
-
 def lv_list(hex_str:str|list) -> list[int]:
 
     if isinstance(hex_str, list):
         hex_str = bytes_to_hex(hex_str)
     
-    clean_str = ''.join(c for c in hex_str if c.isalnum())
-    if len(clean_str) % 2 != 0:
-        raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
+    clean_str = __remove_whitespaces(hex_str)
     
     str_len = len(clean_str) // 2
 
-    return list(bytes.fromhex(f'{str_len:02x}' + clean_str))
+    if str_len <= 255:
+        return list(bytes.fromhex(f'{str_len:02x}' + clean_str))
+    else:
+        return list(bytes.fromhex(f'{str_len:04x}' + clean_str))
 
 
 def lv_hex(hex_str:str|list) -> str:
@@ -66,12 +53,14 @@ def lv_hex(hex_str:str|list) -> str:
     if isinstance(hex_str, list):
         hex_str = bytes_to_hex(hex_str)
     
-    clean_str = ''.join(c for c in hex_str if c.isalnum())
-    if len(clean_str) % 2 != 0:
-        raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
+    clean_str = __remove_whitespaces(hex_str)
     
     str_len = len(clean_str) // 2
-    return f'{str_len:02x}' + clean_str
+
+    if str_len <= 255:
+        return f'{str_len:02x}' + clean_str
+    else:
+        return f'{str_len:04x}' + clean_str
 
 
 def lv_asn(an_array:list|str) -> str:
@@ -83,12 +72,10 @@ def lv_asn(an_array:list|str) -> str:
     010000 FFFFFF - 83010000:83FFFFFF [hex string]  
     """
 
-    if not isinstance(an_array, str):
+    if isinstance(an_array, list):
         an_array = bytes_to_hex(an_array)
     
-    clean_str = ''.join(c for c in an_array if c.isalnum())
-    if len(clean_str) % 2 != 0:
-        raise ValueError(f'Input hex string has odd length ({len(clean_str)})')
+    clean_str = __remove_whitespaces(an_array)
     
     str_len = len(clean_str) // 2
 
@@ -135,8 +122,7 @@ def len_asn(an_array:list|str) -> str:
         return f'{first_byte:02x}' + hex_val
 
 
-
-def decode_bcd(buffer:list|str):
+def decode_bcd(buffer:list|str) -> str:
     if isinstance(buffer, str):
         buffer = hex_to_bytes(buffer)
     
@@ -147,7 +133,7 @@ def decode_bcd(buffer:list|str):
     return res.replace('f', '')
 
 
-def encode_bcd(buffer:list|str):
+def encode_bcd(buffer:list|str) -> str:
     if isinstance(buffer, str):
         clean_str = ''.join(c for c in buffer if c.isalnum())
 
@@ -162,7 +148,40 @@ def encode_bcd(buffer:list|str):
     return res
 
 
-def decode_ucs2(input:str|list) -> str:
+def encode_alpha_field(text:str, scheme:str='81') -> bytearray:
+    
+    # Base Pointer для кириллицы (диапазон 0x0400 -> 0x0400 >> 7 = 0x08)
+    # В общем случае его можно вычислять динамически по первому "не-ASCII" символу
+    base_pointer = 0x08 
+    base_address = base_pointer << 7
+    
+    payload = bytearray()
+    
+    for char in text:
+        code = ord(char)
+        
+        # ASCII диапазон (пробелы, цифры, латиница)
+        if 0x00 <= code <= 0x7F:
+            payload.append(code)
+        
+        # Диапазон, попадающий в окно Base Pointer
+        elif base_address <= code < (base_address + 128):
+            # Устанавливаем 8-й бит и берем остаток от смещения
+            payload.append((code & 0x7F) | 0x80)
+            
+        else:
+            raise ValueError(f"Символ {char} (U+{code:04X}) не лезет в ASCII или окно 0x{base_address:04X}")
+
+    header = bytearray([
+        0x81,           # Identifier
+        len(payload),   # Length of the following data
+        base_pointer    # Base Pointer
+    ])
+    
+    return header + payload
+
+
+def decode_alpha_field(input:str|list) -> str:
 
     res = ''
     if len(input) == 0:
@@ -206,7 +225,6 @@ def decode_ucs2(input:str|list) -> str:
     return res
 
 
-
 def calculate_luhn_checksum(iccid_base):
     """
     Вычисляет контрольную цифру для ICCID (алгоритм Луна).
@@ -229,6 +247,26 @@ def calculate_luhn_checksum(iccid_base):
     # Находим, сколько не хватает до ближайшего десятка
     checksum = (10 - (total_sum % 10)) % 10
     return checksum
+
+
+def parse_tlv(target_tag:int, buffer:list) -> list[int]:
+    tag    = 0
+    length = 1
+    idx = 2
+
+    if buffer[0] != 0x61:
+        return []
+    
+    while idx < buffer[1]:
+        tag    = buffer[idx]
+        idx += 1
+        length = buffer[idx]
+        idx += 1
+        if tag == target_tag:
+            return buffer[idx: idx + length]
+        else:
+            idx += length
+    return []
 
 
 def parse_card_resources(response:list):
@@ -295,7 +333,7 @@ def parse_status(data:list):
 
     while offset < total_length:
         if data[offset] != 0xE3:
-            raise ValueError(f'In Expect \'E3\' header tag, but got {data[0]:02x}')
+            raise ValueError(f'Expect \'E3\' header tag, but got {data[0]:02x}')
         
         offset   += 1
         length_E3 = data[offset]
