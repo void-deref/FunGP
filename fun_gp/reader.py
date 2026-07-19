@@ -5,8 +5,8 @@ from smartcard.Exceptions import CardConnectionException, SmartcardException
 from smartcard.CardConnection import CardConnection
 import time
 
-from fun_gp         import SW_list
-from fun_gp.utils   import bytes_to_hex, hex_to_bytes
+from fun_gp import SW_list, bytes_to_hex, hex_to_bytes
+
 
 class SWMismatchException(SmartcardException):
     pass
@@ -30,9 +30,10 @@ class APDUTracer(CardConnectionObserver):
                 print(f'>> {cmd}')
             case 'response':
                 sw1, sw2 = handlers.args[-2:]
-                if handlers.args[0]:  # Более чистая проверка на пустой список
+                description = SW_list.get(((sw1 << 8) | (sw2 & 0xFF)), 'To be classified')
+                if handlers.args[0]:
                     print(f'<< {bytes_to_hex(handlers.args[0])}')
-                print(f'<< {sw1:02x}{sw2:02x}')
+                print(f'<< {sw1:02x}{sw2:02x} [{description}]')
             case _:
                 print(f'Unknown event {handlers.type}')
 

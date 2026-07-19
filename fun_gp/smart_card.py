@@ -8,13 +8,13 @@ class SmartCard:
         self._ccm        = ccm
 
 
-    def transmit(self, cmd:str|list, exp_sw1:int|None = None, exp_sw2 : int|None = None, cmd_name:str='', is_secured=False) -> tuple[list[int], int, int]:
+    def transmit(self, cmd:str|list, exp_sw1:int|None = None, exp_sw2:int|None = None, cmd_name:str='', is_secured=False) -> tuple[list[int], int, int]:
         if is_secured:
             cmd = self._scp02.make_scp02_packet(cmd)
         return self._plain_apdu(cmd, exp_sw1, exp_sw2, cmd_name)
 
 
-    def mutual_auth(self, exp_sw1:int|None = None, exp_sw2 : int|None = None):
+    def mutual_auth(self, exp_sw1:int|None = None, exp_sw2:int|None = None):
         host_challenge = list(os.urandom(8))
         cmd_init_update = [0x80, 0x50, 0x00, 0x00, 0x08] + host_challenge
         resp, sw1, sw2 = self.transmit(cmd_init_update, exp_sw1, exp_sw2, cmd_name = 'Initialize update')
@@ -33,7 +33,7 @@ class SmartCard:
             self._scp02.authenticated = True
 
 
-    def install_app_scp02(self, cap_path:str, install_params:InstallParams, exp_sw1:int|None = None, exp_sw2 : int|None = None, is_secured=True):
+    def install_app_scp02(self, cap_path:str, install_params:InstallParams, exp_sw1:int|None = None, exp_sw2:int|None = None, is_secured=True):
         """
         Install an applet through the SCP02 protocol.  
         
@@ -72,7 +72,7 @@ class SmartCard:
             f'Applet  size:   {self._ccm.cap_file_size} bytes.\n')
 
 
-    def uninstall_app_scp02(self, package_aid:str='', applet_aid:str='', exp_sw1:int|None = None, exp_sw2 : int|None = None, is_secured=True):
+    def uninstall_app_scp02(self, package_aid:str='', applet_aid:str='', exp_sw1:int|None = None, exp_sw2:int|None = None, is_secured=True):
         """
         Uninstalls previously installed applet. Note that uninstalling a package will
         lead to removing all relative applets too.

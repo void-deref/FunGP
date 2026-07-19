@@ -1,4 +1,4 @@
-from fun_gp.utils import bytes_to_hex, hex_to_bytes, lv_hex, len_asn, lv_hex, lv_list
+from fun_gp import bytes_to_hex, hex_to_bytes, lv_asn, lv_hex, lv_hex, lv_list
 from zipfile import ZipFile
 
 
@@ -88,14 +88,14 @@ class CCM:
         self.cap_file_size = 0
     
 
-    def make_cmd_install_for_load(self, package_aid:str, sd_aid:str=None) -> str:
+    def make_cmd_install_for_load(self, package_aid:str, sd_aid:str=None, load_params:LoadParams=LoadParams()) -> str:
         """
         GP 2.3, clause 11.5   
         
         Initiates various steps required for Card Content management.  
         More details can be found in README.md.
         """
-        for_load = ForLoad(package_aid=package_aid, sd_aid=sd_aid, load_params=LoadParams())
+        for_load = ForLoad(package_aid, sd_aid, load_params)
         compiled = '80E6 0200 ' + lv_hex(bytes_to_hex(for_load[0:]))
         return compiled
 

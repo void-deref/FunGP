@@ -1,4 +1,4 @@
-from fun_gp.utils import bytes_to_hex, hex_to_bytes
+from fun_gp import bytes_to_hex, hex_to_bytes
 from Crypto.Cipher import DES3, DES
 
 
