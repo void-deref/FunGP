@@ -32,7 +32,7 @@ class ForLoad:
         self.package_aid = lv_list(package_aid)
         self.sd_aid      = lv_list(sd_aid) if sd_aid != None else [0x00]
         self.lfdbh       = [0x00] # The length of Load File Data Block Hash is always '0'
-        self.params      = lv_list(load_params[0:]) if load_params != None else [0x00]
+        self.params      = lv_list(load_params[0:]) if load_params != None else []
         self.token       = [0x00]
     
     def _build_list(self):
@@ -179,6 +179,6 @@ Components = [
     "StaticField.cap",
     "Export.cap",
     "ConstantPool.cap",
-    # "RefLocation.cap", #(optional)
+    "RefLocation.cap", #(optional)
     # "Descriptor.cap", #(optional)
 ]

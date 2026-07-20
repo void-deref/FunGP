@@ -1,4 +1,4 @@
-from fun_gp import SCP02, CCM, InstallParams
+from fun_gp import SCP02, CCM, LoadParams, InstallParams
 import os
 
 class SmartCard:
@@ -48,7 +48,7 @@ class SmartCard:
         cap_bytes, pkg_aid, app_aid = self._ccm.decomposite_cap_file(cap_path)
 
         # INSTALL[for load]
-        for_load = self._ccm.make_cmd_install_for_load(pkg_aid)
+        for_load = self._ccm.make_cmd_install_for_load(pkg_aid, None, LoadParams())
         self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', is_secured=is_secured)
         
         # LOAD

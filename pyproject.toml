@@ -12,6 +12,7 @@ authors = [
 dependencies = [
     "pyscard",
     "pycryptodome",
+    "cryptography",
 ]
 
 [tool.setuptools.packages.find]
