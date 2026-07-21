@@ -32,16 +32,7 @@ class SCP02:
 
     
     def init_update(self, response, host_challenge):
-        counter,              \
-        card_challenge,       \
-        card_cryptogram,      \
-        diversification_data, \
-        kvn_and_scp_id = self._parse_card_response(response)
-
-        print(f'\t\tKey diversification data: {bytes_to_hex(diversification_data)}')
-        print(f'\t\tKVN and SCP ID          : {bytes_to_hex(kvn_and_scp_id)}')
-        print(f'\t\tKey Sequence counter    : {bytes_to_hex(counter)}')
-        print(f'\t\tCard challenge          : {bytes_to_hex(card_challenge)}')
+        counter, card_challenge, card_cryptogram = self._parse_card_response(response)
 
         self.session_enc = self._derive_key(self.enc, counter, 'enc')
         self.session_mac = self._derive_key(self.enc, counter, 'mac')
@@ -134,7 +125,12 @@ class SCP02:
         card_challenge       = response[14:20]
         card_cryptogram      = response[20:28]
         
-        return counter, card_challenge, card_cryptogram, diversification_data, kvn_and_scp_id
+        print(f'\t\tKey diversification data: {bytes_to_hex(diversification_data)}')
+        print(f'\t\tKVN and SCP ID          : {bytes_to_hex(kvn_and_scp_id)}')
+        print(f'\t\tKey Sequence counter    : {bytes_to_hex(counter)}')
+        print(f'\t\tCard challenge          : {bytes_to_hex(card_challenge)}')
+
+        return counter, card_challenge, card_cryptogram
 
 
     def _retail_mac(self, input_list:list):

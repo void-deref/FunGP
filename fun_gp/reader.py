@@ -30,10 +30,20 @@ class APDUTracer(CardConnectionObserver):
                 print(f'>> {cmd}')
             case 'response':
                 sw1, sw2 = handlers.args[-2:]
-                description = SW_list.get(((sw1 << 8) | (sw2 & 0xFF)), 'To be classified')
+                sw1sw2 = sw1 << 8 | sw2
+                if sw1 in (0x61, 0x6C):
+                    sw1sw2 = sw1sw2 & 0xFF00
+                    attempts_left = f'({sw2} bytes remaining)'
+                elif sw1 == 0x63:
+                    sw1sw2 = sw1sw2 & 0xFFF0
+                    attempts_left = f'({sw2 & 0x0F} attempts left)'
+                else:
+                    attempts_left = ''
+                
+                description = SW_list.get(sw1sw2, 'To be classified')
                 if handlers.args[0]:
                     print(f'<< {bytes_to_hex(handlers.args[0])}')
-                print(f'<< {sw1:02x}{sw2:02x} [{description}]')
+                print(f'<< {sw1:02x}{sw2:02x} [ {description} {attempts_left}]')
             case _:
                 print(f'Unknown event {handlers.type}')
 
