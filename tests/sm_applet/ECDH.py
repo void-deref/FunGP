@@ -5,16 +5,13 @@ from fun_gp import hex_to_bytes
 
 
 class DiffieHellman:
-    def __init__(self, priv_key:int=None):
+    def __init__(self):
 
-        if priv_key is not None:
-            pass
-        else:
-            self.priv_key = ec.generate_private_key(ec.SECP256K1())
+        self.priv_key = ec.generate_private_key(ec.SECP256K1())
         self.pub_key  = self.priv_key.public_key().public_bytes(
-            serialization.Encoding.X962,
-            serialization.PublicFormat.UncompressedPoint
-        ).hex()
+                            serialization.Encoding.X962,
+                            serialization.PublicFormat.UncompressedPoint
+                        ).hex()
 
         self.cipher = None
         self.iv = bytearray(16)

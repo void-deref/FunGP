@@ -1,6 +1,9 @@
 from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, APPLET_PATH
 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
+
+# Applet can be downloaded from https://github.com/void-deref/SecMsgApplet.git
+# the cap-file must be located in folder 'resources'
 cap_path = APPLET_PATH / 'SM_applet.cap'
 
 def install_applet():
