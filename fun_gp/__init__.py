@@ -11,4 +11,4 @@ from fun_gp.smart_card import SmartCard
 from pathlib import Path
 
 BASE_DIR    = Path(__file__).resolve().parent
-APPLET_PATH = BASE_DIR / ".." / "resources"
+APPLET_PATH = BASE_DIR.parent / "resources"
