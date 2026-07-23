@@ -44,8 +44,8 @@ class SCP02:
         if card_cryptogram != card_cryptogram_check:
             raise ValueError(
                 f'\t\t\tERROR: cryptograms mismatch!\
-                \n\t\t\texpected {card_cryptogram}\
-                \n\t\t\tgot      {card_cryptogram_check}\
+                \n\t\t\texpected {bytes_to_hex(card_cryptogram)}\
+                \n\t\t\tgot      {bytes_to_hex(card_cryptogram_check)}\
                 \n\t\t\t****************************** NOTICE! ******************************\
                 \n\t\t\tYou see this message because \'INITIALIZE UPDATE\' command failed.\
                 \n\t\t\tAfter 5 or more attemts ISD can intentionally increase the time of \
