@@ -4,12 +4,18 @@ from smartcard.CardConnectionObserver import CardConnectionObserver
 from smartcard.Exceptions import CardConnectionException, SmartcardException
 from smartcard.CardConnection import CardConnection
 import time
+from typing import NamedTuple
 
 from fun_gp import SW_list, bytes_to_hex, hex_to_bytes
 
 
 class SWMismatchException(SmartcardException):
     pass
+
+class CardResponse(NamedTuple):
+    resp:list[int]
+    sw1:int
+    sw2:int
 
 
 class APDUTracer(CardConnectionObserver):
@@ -77,7 +83,7 @@ class Reader:
                 print('Reader: context has been released.')
 
  
-    def plain_apdu(self, cmd:str|list, exp_sw1:int | None = None, exp_sw2 : int | None = None, cmd_name:str=None) -> tuple[list[int], int, int]:
+    def plain_apdu(self, cmd:str|list, exp_sw1:int | None = None, exp_sw2 : int | None = None, cmd_name:str=None) -> CardResponse:
 
         if isinstance(cmd, str):
             cmd = hex_to_bytes(cmd)
@@ -115,7 +121,7 @@ class Reader:
             raise SWMismatchException(f"\n\nCard response error: {description} {attempts_left}"
                                         f"\nexpected: {exp_sw1_str}{exp_sw2_str} "
                                         f"\ngot:      {sw1:02x}{sw2:02x} ")
-        return resp, sw1, sw2
+        return CardResponse(resp, sw1, sw2)
 
 
     def cold_reset(self) -> str:
