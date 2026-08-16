@@ -12,8 +12,7 @@ class SCP02:
         self.session_enc = None
         self.session_mac = None
         self.session_dec = None
-        self.IV = [0] * 8
-        
+        self.IV = bytes([0] * 8)
         self.authenticated = False
 
 
@@ -134,35 +133,25 @@ class SCP02:
         return counter, card_challenge, card_cryptogram
 
 
-    def _retail_mac(self, input_list:list):
-        
-        # According to ISO 9797-1
-        # Step 1: padding method 2
-        payload  = list(input_list)
-        payload += [0x80]
-        data_len = len(payload)
-        padding  = (8 - (data_len % 8)) % 8
-        payload += [0] * padding
+    def _retail_mac(self, input_list:list) -> list[int]:
+        # ISO 9797-1 MAC 3 (also known as Retail MAC)
+        data    = list(input_list)
+        padding = 0
 
-        # cmd[4] += 8
-        des_ecb  = DES.new(self.session_mac[0:8], DES.MODE_ECB)
-        des3_ecb = DES3.new(self.session_mac, DES3.MODE_ECB)
+        data.append(0x80)
+        data_len = len(data)
+        padding  = (8 - (data_len % 8)) % 8
+        data    += [0] * padding
 
         if self.authenticated == True:
-            self.IV = list(des_ecb.encrypt(bytes(self.IV)))
+            des_ecb  = DES.new(self.session_mac[0:8], DES.MODE_ECB)
+            self.IV = des_ecb.encrypt(self.IV)
 
-        i = 0
-        # Steps 2-4: splitting, initial trasformation and iteration
-        while i < (len(payload) - 8):
-            for j in range(8):
-                self.IV[j] ^= payload[i + j]
-            
-            self.IV = list(des_ecb.encrypt(bytes(self.IV)))
-            i += 8
-        
-        # step 5: output transformation
-        for j in range(8):
-            self.IV[j] ^= payload[i + j]
-        
-        self.IV = list(des3_ecb.encrypt(bytes(self.IV)))   
-        return self.IV
+        des_K1  = DES.new(bytes(self.session_mac[0:8]), DES.MODE_CBC, self.IV)
+        Hq      = des_K1.encrypt(bytes(data[0:-8]))
+
+        des_K2  = DES3.new(bytes(self.session_mac), DES.MODE_CBC, bytes(Hq[-8:]))
+        self.IV = des_K2.encrypt(bytes(data[-8:]))
+        mac     = list(self.IV)
+
+        return mac
