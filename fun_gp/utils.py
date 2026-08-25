@@ -25,8 +25,11 @@ def bytes_to_hex(byte_data:list, uppercase=True) -> str:
     return ''.join(fmt.format(x) for x in b)
 
 
-def lv_list(hex_str:str|list) -> list[int]:
+def lv_list(hex_str:str|list|bytes) -> list[int]:
 
+    if isinstance(hex_str, bytes):
+        hex_str = bytes_to_hex(list(hex_str))
+        
     if isinstance(hex_str, list):
         hex_str = bytes_to_hex(hex_str)
     
@@ -40,7 +43,7 @@ def lv_list(hex_str:str|list) -> list[int]:
         return list(bytes.fromhex(f'{str_len:04x}' + clean_str))
 
 
-def lv_hex(hex_str:str|list) -> str:
+def lv_hex(hex_str:str|list|bytes) -> str:
     """
     lv stands for 'length-value' taken from TLV concept.  
     This function takes a hex string as an input and returns it without
@@ -49,7 +52,9 @@ def lv_hex(hex_str:str|list) -> str:
     :param hex_str: a string with hexadecimal values
     :returns: length + value string in hex
     """
-
+    if isinstance(hex_str, bytes):
+        hex_str = bytes_to_hex(list(hex_str))
+    
     if isinstance(hex_str, list):
         hex_str = bytes_to_hex(hex_str)
     
@@ -63,7 +68,7 @@ def lv_hex(hex_str:str|list) -> str:
         return f'{str_len:04x}' + clean_str
 
 
-def lv_asn(an_array:list|str) -> str:
+def lv_asn(an_array:str|list|bytes) -> str:
     """
     Same as 'len_asn', but also appends data hex string:  
     00-7F         - as is [hex string]    
@@ -72,6 +77,9 @@ def lv_asn(an_array:list|str) -> str:
     010000 FFFFFF - 83010000:83FFFFFF [hex string]  
     """
 
+    if isinstance(an_array, bytes):
+        an_array = bytes_to_hex(list(an_array))
+    
     if isinstance(an_array, list):
         an_array = bytes_to_hex(an_array)
     
