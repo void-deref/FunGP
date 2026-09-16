@@ -147,11 +147,17 @@ class SCP02:
             des_ecb  = DES.new(self.session_mac[0:8], DES.MODE_ECB)
             self.IV = des_ecb.encrypt(self.IV)
 
-        des_K1  = DES.new(bytes(self.session_mac[0:8]), DES.MODE_CBC, self.IV)
-        Hq      = des_K1.encrypt(bytes(data[0:-8]))
+        last_block      = bytes(data[-8:])
+        previous_blocks = bytes(data[0:-8])
+        current_iv      = self.IV
 
-        des_K2  = DES3.new(bytes(self.session_mac), DES.MODE_CBC, bytes(Hq[-8:]))
-        self.IV = des_K2.encrypt(bytes(data[-8:]))
+        if previous_blocks:
+            des_K1     = DES.new(bytes(self.session_mac[0:8]), DES.MODE_CBC, self.IV)
+            Hq         = des_K1.encrypt(previous_blocks)
+            current_iv = Hq[-8:]
+
+        des_K2  = DES3.new(bytes(self.session_mac), DES.MODE_CBC, current_iv)
+        self.IV = des_K2.encrypt(last_block)
         mac     = list(self.IV)
 
         return mac

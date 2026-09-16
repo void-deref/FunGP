@@ -88,3 +88,37 @@ class SmartCard:
 
         cmd = self._ccm.make_cmd_delete(package_aid, applet_aid)
         self.transmit(cmd, exp_sw2, exp_sw2, f'UNINSTALL [{aid_str}]', is_secured=is_secured)
+
+
+    def install_lib_scp02(self, lib_path:str, exp_sw1:int|None = None, exp_sw2:int|None = None, is_secured=True):
+        """
+        Install a library by means of SCP02 protocol.  
+        
+        :param lib_path: path to a cap file to be installed  
+        :param install_params: by default passes applet's AID only. Additional params must
+        be prepended with length value e.g.:  
+        `lv(pin) + lv(secret)`
+        so that the resulting string will have the following form:  
+        `[len][AID] [len][pin] [len][secret]`
+        
+        """
+        cap_bytes, pkg_aid, _ = self._ccm.decomposite_cap_file(lib_path)
+
+        # INSTALL[for load]
+        for_load = self._ccm.make_cmd_install_for_load(pkg_aid, None, LoadParams())
+        self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', is_secured=is_secured)
+        
+        # LOAD
+        cap_chunks = self._ccm.make_cmd_load(cap_bytes)
+        for chunk in cap_chunks:
+            self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', is_secured=is_secured)
+        
+        # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Lcn' is greater than 'self.cap_file_size'.
+        # The difference is C * N + T, where
+        # C - the length of CMAC,
+        # N - number of LOAD commands,
+        # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
+        print(f'***** CAP-file size *****')
+        print(f'\n***** CAP-file parameters *****\n'
+            f'Package AID:  {pkg_aid}\n'
+            f'Package size: {self._ccm.cap_file_size} bytes.\n')

@@ -143,7 +143,8 @@ class CCM:
         raw_bytes = None
         cap_bytes = []
         package_aid = []
-
+        applet_aid  = []
+        
         with ZipFile(cap_path, 'r') as jar:
 
             for comp in Components:    
