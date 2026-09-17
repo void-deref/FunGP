@@ -65,7 +65,6 @@ class SmartCard:
         # C - the length of CMAC,
         # N - number of LOAD commands,
         # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
-        print(f'***** CAP-file size *****')
         print(f'\n***** CAP-file parameters *****\n'
             f'Package AID:    {pkg_aid}\n'
             f'Applet  AID:    {app_aid}\n'
@@ -87,7 +86,7 @@ class SmartCard:
             aid_str = package_aid if len(package_aid) != 0 else applet_aid
 
         cmd = self._ccm.make_cmd_delete(package_aid, applet_aid)
-        self.transmit(cmd, exp_sw2, exp_sw2, f'UNINSTALL [{aid_str}]', is_secured=is_secured)
+        self.transmit(cmd, exp_sw1, exp_sw2, f'UNINSTALL [{aid_str}]', is_secured=is_secured)
 
 
     def install_lib_scp02(self, lib_path:str, exp_sw1:int|None = None, exp_sw2:int|None = None, is_secured=True):
@@ -118,7 +117,6 @@ class SmartCard:
         # C - the length of CMAC,
         # N - number of LOAD commands,
         # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
-        print(f'***** CAP-file size *****')
-        print(f'\n***** CAP-file parameters *****\n'
+        print(f'\n***** Library parameters *****\n'
             f'Package AID:  {pkg_aid}\n'
             f'Package size: {self._ccm.cap_file_size} bytes.\n')
