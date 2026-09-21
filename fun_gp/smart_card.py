@@ -52,7 +52,7 @@ class SmartCard:
         self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', is_secured=is_secured)
         
         # LOAD
-        cap_chunks = self._ccm.make_cmd_load(cap_bytes)
+        cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=247)
         for chunk in cap_chunks:
             self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', is_secured=is_secured)
 
@@ -108,7 +108,7 @@ class SmartCard:
         self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', is_secured=is_secured)
         
         # LOAD
-        cap_chunks = self._ccm.make_cmd_load(cap_bytes)
+        cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=247)
         for chunk in cap_chunks:
             self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', is_secured=is_secured)
         

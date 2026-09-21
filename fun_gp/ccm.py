@@ -100,7 +100,7 @@ class CCM:
         return compiled
 
 
-    def make_cmd_load(self, cap_bytes:list, chunk_size:int=247, add_cmd='') -> list[str]:
+    def make_cmd_load(self, cap_bytes:list, chunk_size:int, add_cmd='') -> list[str]:
         """
         Transmits the Load File (.cap file).  
         More details can be found in README.md.
@@ -122,7 +122,7 @@ class CCM:
         return cmd_list
 
 
-    def make_cmd_install_for_install(self, package_aid:str, applet_aid:str, install_params:InstallParams):
+    def make_cmd_install_for_install(self, package_aid:str, applet_aid:str, install_params:InstallParams) -> str:
         install_params = ForInstall(package_aid, applet_aid, install_params)
         cmd = '80E6 0C00' + lv_hex(install_params[0:])
         return cmd
