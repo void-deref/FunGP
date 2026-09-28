@@ -33,7 +33,14 @@ class SmartCard:
             self._scp02.authenticated = True
 
 
-    def install_app_scp02(self, cap_path:str, install_params:InstallParams, exp_sw1:int|None = None, exp_sw2:int|None = None, is_secured=True):
+    def install_app_scp02(
+            self, cap_path:str, install_params:InstallParams,
+            load_file_aid: str|None = None,
+            module_aid:    str|None = None,
+            instance_aid:  str|None  = None,
+            exp_sw1:int|None = None,
+            exp_sw2:int|None = None,
+            is_secured=True):
         """
         Install an applet through the SCP02 protocol.  
         
@@ -47,8 +54,13 @@ class SmartCard:
         """
         cap_bytes, pkg_aid, app_aid = self._ccm.decomposite_cap_file(cap_path)
 
+        # Mind the order: the value of module_aid depends on instance_aid
+        instance_aid  = instance_aid  or app_aid
+        module_aid    = module_aid    or instance_aid
+        load_file_aid = load_file_aid or pkg_aid
+        
         # INSTALL[for load]
-        for_load = self._ccm.make_cmd_install_for_load(pkg_aid, None, LoadParams())
+        for_load = self._ccm.make_cmd_install_for_load(load_file_aid, None, LoadParams())
         self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', is_secured=is_secured)
         
         # LOAD
@@ -57,7 +69,7 @@ class SmartCard:
             self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', is_secured=is_secured)
 
         # INSTALL[for install and make selectable]
-        for_install = self._ccm.make_cmd_install_for_install(pkg_aid, app_aid, install_params)
+        for_install = self._ccm.make_cmd_install_for_install(load_file_aid, module_aid, instance_aid, install_params)
         self.transmit(for_install, exp_sw1, exp_sw2, 'INSTALL[for install and make selectable]', is_secured=is_secured)
         
         # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Lcn' is greater than 'self.cap_file_size'.
@@ -66,8 +78,8 @@ class SmartCard:
         # N - number of LOAD commands,
         # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
         print(f'\n***** CAP-file parameters *****\n'
-            f'Package AID:    {pkg_aid}\n'
-            f'Applet  AID:    {app_aid}\n'
+            f'Package AID:    {load_file_aid}\n'
+            f'Applet  AID:    {instance_aid}\n'
             f'Applet  size:   {self._ccm.cap_file_size} bytes.\n')
 
 
@@ -101,10 +113,10 @@ class SmartCard:
         `[len][AID] [len][pin] [len][secret]`
         
         """
-        cap_bytes, pkg_aid, _ = self._ccm.decomposite_cap_file(lib_path)
+        cap_bytes, load_file_aid, _ = self._ccm.decomposite_cap_file(lib_path)
 
         # INSTALL[for load]
-        for_load = self._ccm.make_cmd_install_for_load(pkg_aid, None, LoadParams())
+        for_load = self._ccm.make_cmd_install_for_load(load_file_aid, None, LoadParams())
         self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', is_secured=is_secured)
         
         # LOAD
@@ -118,5 +130,5 @@ class SmartCard:
         # N - number of LOAD commands,
         # T = C4 BER-TLV object at the beginning of the very first LOAD CDATA field.
         print(f'\n***** Library parameters *****\n'
-            f'Package AID:  {pkg_aid}\n'
+            f'Package AID:  {load_file_aid}\n'
             f'Package size: {self._ccm.cap_file_size} bytes.\n')

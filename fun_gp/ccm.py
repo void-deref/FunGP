@@ -27,16 +27,16 @@ class LoadParams:
     
 
 class ForLoad:
-    def __init__(self, package_aid:str, sd_aid:str=None, load_params:LoadParams=None):
+    def __init__(self, load_file_aid:str, sd_aid:str=None, load_params:LoadParams=None):
 
-        self.package_aid = lv_list(package_aid)
+        self.load_file_aid = lv_list(load_file_aid)
         self.sd_aid      = lv_list(sd_aid) if sd_aid != None else [0x00]
         self.lfdbh       = [0x00] # The length of Load File Data Block Hash is always '0'
         self.params      = lv_list(load_params[0:]) if load_params != None else []
         self.token       = [0x00]
     
     def _build_list(self):
-        return  self.package_aid + self.sd_aid + self.lfdbh + self.params + self.token
+        return  self.load_file_aid + self.sd_aid + self.lfdbh + self.params + self.token
 
     def __getitem__(self, index):
         return self._build_list()[index]
@@ -47,7 +47,7 @@ class ForLoad:
 
 class InstallParams:
     def __init__(self, app_params:str=None):
-        self.app_params  = [0xC9] + lv_list(app_params) if app_params != None else [0xC9, 0x00]
+        self.app_params = [0xC9] + lv_list(app_params) if app_params != None else [0xC9, 0x00]
         self.sys_params = [0xEF, 0x00]
 
     def _build_list(self):
@@ -61,18 +61,18 @@ class InstallParams:
     
 
 class ForInstall:
-    def __init__(self, package_aid:str, applet_aid:str, install_params:InstallParams):
-        self.package_aid = lv_list(package_aid)
-        self.instace_aid = lv_list(applet_aid)
-        self.applet_aid  = lv_list(applet_aid)
+    def __init__(self, load_file_aid:str, module_aid:str, instance_aid:str, install_params:InstallParams, privileges:list[int]):
+        self.load_file_aid = lv_list(load_file_aid)
+        self.module_aid  = lv_list(module_aid)
+        self.instace_aid = lv_list(instance_aid)
 
-        self.privileges = [0x01, 0x00]
+        self.privileges = privileges or [0x01, 0x00]
 
         self.params     = lv_list(install_params[0:])
         self.token      = [0x00]
     
     def _build_list(self):
-        return  self.package_aid + self.instace_aid + self.applet_aid + \
+        return  self.load_file_aid + self.module_aid + self.instace_aid + \
                 self.privileges + self.params + self.token
 
     def __getitem__(self, index):
@@ -88,14 +88,14 @@ class CCM:
         self.cap_file_size = 0
     
 
-    def make_cmd_install_for_load(self, package_aid:str, sd_aid:str=None, load_params:LoadParams=LoadParams()) -> str:
+    def make_cmd_install_for_load(self, load_file_aid:str, sd_aid:str=None, load_params:LoadParams=LoadParams()) -> str:
         """
         GP 2.3, clause 11.5   
         
         Initiates various steps required for Card Content management.  
         More details can be found in README.md.
         """
-        for_load = ForLoad(package_aid, sd_aid, load_params)
+        for_load = ForLoad(load_file_aid, sd_aid, load_params)
         compiled = '80E6 0200 ' + lv_hex(bytes_to_hex(for_load[0:]))
         return compiled
 
@@ -122,8 +122,8 @@ class CCM:
         return cmd_list
 
 
-    def make_cmd_install_for_install(self, package_aid:str, applet_aid:str, install_params:InstallParams) -> str:
-        install_params = ForInstall(package_aid, applet_aid, install_params)
+    def make_cmd_install_for_install(self, load_file_aid:str, module_aid:str, instance_aid:str, install_params:InstallParams, privileges:list[int]=None) -> str:
+        install_params = ForInstall(load_file_aid, module_aid, instance_aid, install_params, privileges)
         cmd = '80E6 0C00' + lv_hex(install_params[0:])
         return cmd
 
@@ -142,8 +142,8 @@ class CCM:
     def decomposite_cap_file(self, cap_path:str):
         raw_bytes = None
         cap_bytes = []
-        package_aid = []
-        applet_aid  = []
+        load_file_aid = []
+        module_aid  = []
         
         with ZipFile(cap_path, 'r') as jar:
 
@@ -158,16 +158,16 @@ class CCM:
 
                     if comp.lower() == "header.cap":
                         aid_len     = raw_bytes[12]
-                        package_aid = raw_bytes[13:13 + aid_len]
+                        load_file_aid = raw_bytes[13:13 + aid_len]
                     
                     if comp.lower() == "applet.cap":
                         aid_len    = raw_bytes[4]
-                        applet_aid = raw_bytes[5:5 + aid_len]
+                        module_aid = raw_bytes[5:5 + aid_len]
                     
                     cap_bytes.extend(raw_bytes)
 
         self.cap_file_size = len(cap_bytes)
-        return cap_bytes, bytes_to_hex(package_aid), bytes_to_hex(applet_aid)
+        return cap_bytes, bytes_to_hex(load_file_aid), bytes_to_hex(module_aid)
 
 
 Components = [

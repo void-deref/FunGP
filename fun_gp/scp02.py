@@ -9,9 +9,9 @@ class SCP02:
         self.mac = key_set[1]
         self.dec = key_set[2]
 
-        self.session_enc = None
-        self.session_mac = None
-        self.session_dec = None
+        self.skey_enc = None
+        self.skey_mac = None
+        self.skey_dec = None
         self.IV = bytes([0] * 8)
         self.authenticated = False
 
@@ -33,9 +33,9 @@ class SCP02:
     def init_update(self, response, host_challenge):
         counter, card_challenge, card_cryptogram = self._parse_card_response(response)
 
-        self.session_enc = self._derive_key(self.enc, counter, 'enc')
-        self.session_mac = self._derive_key(self.enc, counter, 'mac')
-        self.session_dec = self._derive_key(self.enc, counter, 'dec')
+        self.skey_enc = self._derive_key(self.enc, counter, 'enc')
+        self.skey_mac = self._derive_key(self.enc, counter, 'mac')
+        self.skey_dec = self._derive_key(self.enc, counter, 'dec')
         
         # GP, appendix E.4.2.1: card authentication cryptogram
         card_cryptogram_check = self._card_crypto(host_challenge, counter, card_challenge)
@@ -67,7 +67,7 @@ class SCP02:
 
     def _host_crypto(self, counter, card_challenge, host_challenge):
         auth_data = counter + card_challenge + host_challenge + [0x80] + [0] * 7
-        auth_data = self._apply_3des_cbc(auth_data, self.session_enc)
+        auth_data = self._apply_3des_cbc(auth_data, self.skey_enc)
         auth_data = list(auth_data[-8:])
         
         print(f'\t\thost cryptogram         : {bytes_to_hex(auth_data)}\n')
@@ -77,7 +77,7 @@ class SCP02:
 
     def _card_crypto(self, host_challenge, counter, card_challenge):
         auth_data = host_challenge + counter + card_challenge + [0x80] + [0] * 7
-        auth_data = self._apply_3des_cbc(auth_data, self.session_enc)
+        auth_data = self._apply_3des_cbc(auth_data, self.skey_enc)
         auth_data = list(auth_data[-8:])
 
         print(f'\t\tcard cryptogram         : {bytes_to_hex(auth_data)}')
@@ -144,7 +144,7 @@ class SCP02:
         data    += [0] * padding
 
         if self.authenticated == True:
-            des_ecb  = DES.new(self.session_mac[0:8], DES.MODE_ECB)
+            des_ecb  = DES.new(self.skey_mac[0:8], DES.MODE_ECB)
             self.IV = des_ecb.encrypt(self.IV)
 
         last_block      = bytes(data[-8:])
@@ -152,11 +152,11 @@ class SCP02:
         current_iv      = self.IV
 
         if previous_blocks:
-            des_K1     = DES.new(bytes(self.session_mac[0:8]), DES.MODE_CBC, self.IV)
+            des_K1     = DES.new(bytes(self.skey_mac[0:8]), DES.MODE_CBC, self.IV)
             Hq         = des_K1.encrypt(previous_blocks)
             current_iv = Hq[-8:]
 
-        des_K2  = DES3.new(bytes(self.session_mac), DES.MODE_CBC, current_iv)
+        des_K2  = DES3.new(bytes(self.skey_mac), DES.MODE_CBC, current_iv)
         self.IV = des_K2.encrypt(last_block)
         mac     = list(self.IV)
 

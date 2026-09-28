@@ -16,6 +16,6 @@ def install_applet():
 
         isd.mutual_auth()
         isd.uninstall_app_scp02('A000000083')
-        isd.install_app_scp02(cap_path, install_params, 0x90, 0x00)
+        isd.install_app_scp02(cap_path, install_params, exp_sw1=0x90, exp_sw2=0x00)
 
 install_applet()
