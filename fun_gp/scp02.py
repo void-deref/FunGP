@@ -11,7 +11,7 @@ class SCP02:
 
         self.skey_enc = None
         self.skey_mac = None
-        self.skey_dec = None
+        self.skey_dek = None
         self.IV = bytes([0] * 8)
         self.authenticated = False
 
@@ -35,7 +35,7 @@ class SCP02:
 
         self.skey_enc = self._derive_key(self.enc, counter, 'enc')
         self.skey_mac = self._derive_key(self.enc, counter, 'mac')
-        self.skey_dec = self._derive_key(self.enc, counter, 'dec')
+        self.skey_dek = self._derive_key(self.enc, counter, 'dec')
         
         # GP, appendix E.4.2.1: card authentication cryptogram
         card_cryptogram_check = self._card_crypto(host_challenge, counter, card_challenge)
@@ -105,8 +105,7 @@ class SCP02:
         # print(f'\t\t{key_type}                     : {bytes_to_hex(session_key)}')
         return session_key
 
-
-    def _apply_3des_cbc(self, plain_text, key):
+    def _apply_3des_cbc(self, plain_text, key:list[int]):
         if isinstance(key, str):
             key = bytes(hex_to_bytes(key))
 
@@ -133,15 +132,23 @@ class SCP02:
         return counter, card_challenge, card_cryptogram
 
 
-    def _retail_mac(self, input_list:list) -> list[int]:
-        # ISO 9797-1 MAC 3 (also known as Retail MAC)
-        data    = list(input_list)
+    def _padding(self, data:list[int]) -> list[int]:
+
         padding = 0
 
         data.append(0x80)
+
         data_len = len(data)
         padding  = (8 - (data_len % 8)) % 8
         data    += [0] * padding
+        
+        return data
+
+
+    def _retail_mac(self, input_list:list) -> list[int]:
+        # ISO 9797-1 MAC 3 (also known as Retail MAC)
+        data = list(input_list)
+        data = self._padding(data)
 
         if self.authenticated == True:
             des_ecb  = DES.new(self.skey_mac[0:8], DES.MODE_ECB)

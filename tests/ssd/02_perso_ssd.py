@@ -1,59 +1,81 @@
 from fun_gp import Reader, SmartCard, SCP02, CCM, hex_to_bytes, bytes_to_hex, lv_hex
-
+from Crypto.Cipher import DES3, DES
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
 ssd_keyset = ['505152535455565758595A5B5C5D5E5F','505152535455565758595A5B5C5D5E5F','505152535455565758595A5B5C5D5E5F']
 
-def install_applet():
+ssd_pkg = 'A000000151535041'
+ssd_aid = ssd_pkg + '6D7920535344'
+
+def personalize_applet():
     with Reader() as reader:
         isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
         isd.mutual_auth()
-        cmd = lv_hex('00 00' + lv_hex('A0000001515350416D7920535344') + '000000')
         
-        isd.transmit('80e4 2000' + cmd, 0x90, 0x00, 'INSTALL [for personalization] my SSD', is_secured=True)
-
-        # dirty hacks: sharing a single value across all keys because they are identical
-        key_encrypted = lv_hex(isd._scp02._apply_3des_cbc(hex_to_bytes(ssd_keyset[0]), isd._scp02.skey_dec))
-        kcv = isd._scp02._apply_3des_cbc(hex_to_bytes('00000000 00000000'), hex_to_bytes(ssd_keyset[0]))[0:3]
-        kcv = bytes_to_hex(kcv)
-
-        b9_k1 = 'B9' + lv_hex(
-            '95 01 18' # [Usage qualifier (clause 11.1.9)], C-ENC
-            '96 01 01' # [Key access (clause 11.1.10)], SSD is the only user. (0x00 if not present)
-            '80 01 80' # [Key type (clause 11.1.8)], DES - mode (ECB/CBC) implicitly known
-            '81 01 10' # key length in bytes (unsigned int value)
-            '82 01 01' # key ID
-            '83 01 01' # KVN
-            '84 03' + kcv # Key check value (appendix B.6)
+        isd.transmit(
+            '80e6 2000' + lv_hex('0000' + lv_hex(ssd_aid) + '000000'),
+            0x90, 0x00,
+            'INSTALL [for personalization] my SSD',
+            is_secured=True
         )
 
-        b9_k2 = 'B9' + lv_hex(
+
+        key_padded    = isd._scp02._padding(hex_to_bytes(ssd_keyset[0]))
+        key_encrypted = isd._scp02._apply_3des_cbc(key_padded, isd._scp02.skey_dek)
+
+        print(f'Key padded   : {bytes_to_hex(key_padded)}')
+        print(f'Key encrypted: {bytes_to_hex(key_encrypted)}')
+
+        padded_kcv    = isd._scp02._padding(hex_to_bytes('00000000 00000000'))
+        kcv           = isd._scp02._apply_3des_cbc(padded_kcv, hex_to_bytes(ssd_keyset[0]))
+        kcv = kcv[0:3]
+        kcv = bytes_to_hex(kcv)
+
+        print(f'KCV padded    : {bytes_to_hex(padded_kcv)}')
+        print(f'KCV           : {kcv}')
+
+        
+
+        # GPCS 2.3, table 11-92
+        crt_k1 = 'B9' + lv_hex(
+            '95 01 18' # C-ENC,                [Usage qualifier (clause 11.1.9)]
+            '96 01 01' # SSD is the only user. [Key access (clause 11.1.10)], (0x00 if not present)
+            '80 01 80' # DES - mode (ECB/CBC) implicitly known [Key type (clause 11.1.8)], 
+            '81 01 10' # key length in bytes
+            '82 01 01' # key ID (see GP CIC, clause 4, table 4-1)
+            '83 01 20' # KVN    (see GP CIC, clause 4, table 4-1)
+            '84 03' + kcv # Key check value    [appendix B.6]
+        )
+
+        crt_k2 = 'B9' + lv_hex(
             '95 01 14' # C-MAC
             '96 01 01'
             '80 01 80'
             '81 01 10'
             '82 01 02' # 02
-            '83 01 01'
+            '83 01 20'
             '84 03' + kcv
         )
 
-        b9_k3 = 'B9' + lv_hex(
-            '95 01 48' # C-DEC
+        crt_k3 = 'B9' + lv_hex(
+            '95 01 48' # C-DEK
             '96 01 01'
             '80 01 80'
             '81 01 10'
             '82 01 03' # 03
-            '83 01 01'
+            '83 01 20'
             '84 03' + kcv
         )
+
+        # GPCS 2.3, 11.11.4
+        key_info_data = '00b9' + lv_hex(crt_k1 + crt_k2 + crt_k3)
+
+        # GPCS 2.3, 11.11.4.1.1
+        sym_scheme = '8113' + lv_hex(key_encrypted) + '8113' + lv_hex(key_encrypted) + '8113' + lv_hex(key_encrypted)
         
-        _8113_k1 = '8113' + lv_hex(key_encrypted)
-        _8113_k2 = '8113' + lv_hex(key_encrypted)
-        _8113_k3 = '8113' + lv_hex(key_encrypted)
-
-        cmd = '00b9' + lv_hex(b9_k1 + b9_k2 + b9_k3) + _8113_k1 + _8113_k2 + _8113_k3
-        print(cmd)
-        isd.transmit('00E2 8800' + lv_hex(cmd), 0x90, 0x00, 'Store data')
+        cmd = lv_hex(key_info_data + sym_scheme)
+        # print(cmd)
+        isd.transmit('80E2 8800' + cmd, 0x90, 0x00, 'Store data', is_secured=True)
 
 
-install_applet()
+personalize_applet()
