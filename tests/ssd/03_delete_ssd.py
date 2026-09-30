@@ -1,10 +1,6 @@
 from fun_gp import Reader, SmartCard, SCP02, CCM
 
-isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
-
-
-ssd_pkg = 'A000000151535041'
-ssd_aid = ssd_pkg + '6D7920535344'
+from params import isd_keyset, ssd_aid
 
 
 def install_applet():

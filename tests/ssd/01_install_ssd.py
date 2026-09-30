@@ -1,10 +1,6 @@
 from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, lv_list, lv_hex
+from params import isd_keyset, ssd_pkg, ssd_aid
 
-isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
-
-
-ssd_pkg = 'A000000151535041'
-ssd_aid = ssd_pkg + '6D7920535344'
 
 def install_applet():
     with Reader() as reader:
@@ -22,8 +18,8 @@ def install_applet():
                 # SCP (i.e. obvious default value) or if the card otherwise supports a
                 # default value or specific policy defined by the Card Issuer,
                 # which remains out of scope of this document.
-                '81020255' # SCP02, i=55
-                '820120'   # accept extradition from ISD
+                '8102 0255' # SCP02, i=55
+                '8201 20'   # accept extradition from ISD
             ),
             # the simulator accepts 800000, while real cards fail with SW 6A80.
             privileges = lv_list('80'),

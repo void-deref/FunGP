@@ -42,13 +42,14 @@ class SCP02:
         
         if card_cryptogram != card_cryptogram_check:
             raise ValueError(
-                f'\t\t\tERROR: cryptograms mismatch!\
-                \n\t\t\texpected {bytes_to_hex(card_cryptogram)}\
-                \n\t\t\tgot      {bytes_to_hex(card_cryptogram_check)}\
-                \n\t\t\t****************************** NOTICE! ******************************\
-                \n\t\t\tYou see this message because \'INITIALIZE UPDATE\' command failed.\
-                \n\t\t\tAfter 5 or more attemts ISD can intentionally increase the time of \
-                \n\t\t\tperformig this operation because he thinks you\'re brute-forcing him.')
+                f'ERROR: cryptograms mismatch!\
+                \nexpected: {bytes_to_hex(card_cryptogram)}\
+                \ngot     : {bytes_to_hex(card_cryptogram_check)}\
+                \n****************************** NOTICE! ******************************\
+                \nYou see this message because \'INITIALIZE UPDATE\' command failed.\
+                \nAfter 5 or more attemts ISD can intentionally increase the time of \
+                \nperformig this operation because he thinks you\'re brute-forcing him.')
+
         return counter, card_challenge, host_challenge
 
 
@@ -102,8 +103,9 @@ class SCP02:
         plain_text = plain_text + [0] * 12
 
         session_key = self._apply_3des_cbc(plain_text, key)
-        # print(f'\t\t{key_type}                     : {bytes_to_hex(session_key)}')
+        print(f'\t\t{key_type.upper()} session key         : {bytes_to_hex(session_key)}')
         return session_key
+
 
     def _apply_3des_cbc(self, plain_text, key:list[int]):
         if isinstance(key, str):
