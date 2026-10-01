@@ -20,6 +20,9 @@ class SCP02:
 
         if isinstance(cmd, str):
             cmd = hex_to_bytes(cmd)
+
+        if len(cmd) == 4:
+            cmd.append(0)
         
         cmd[0] &= 0xFC # clean channel indication
         cmd[0] |= 0x04 # set GP proprietary SM flag

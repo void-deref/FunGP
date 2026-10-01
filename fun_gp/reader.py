@@ -17,6 +17,21 @@ class CardResponse(NamedTuple):
     sw1:int
     sw2:int
 
+def parse_sw(sw1:int, sw2:int) -> tuple[str, str]:
+    sw1sw2 = (sw1 << 8) | sw2
+    
+    if sw1 in (0x61, 0x6C):
+        sw1sw2 &= 0xFF00
+        info_text = f'({sw2} bytes remaining)'
+    elif sw1 == 0x63:
+        sw1sw2 &= 0xFFF0
+        info_text = f'({sw2 & 0x0F} attempts left)'
+    else:
+        info_text = ''
+        
+    description = SW_list.get(sw1sw2, 'To be classified')
+    return description, info_text
+
 
 class APDUTracer(CardConnectionObserver):
     def update(self, observable, handlers):
@@ -29,27 +44,19 @@ class APDUTracer(CardConnectionObserver):
                 print(f"Releasing '{observable.getReader()}' reader")
             case 'command':
                 raw_bytes = handlers.args[0]
-                cmd = bytes_to_hex(raw_bytes[0:4])
+                cmd = f"{bytes_to_hex(raw_bytes[0:2])} {bytes_to_hex(raw_bytes[2:4])}"
                 cmd += ' ' + bytes_to_hex(raw_bytes[4:5])
                 if len(raw_bytes) > 5:
                     cmd += ' ' + bytes_to_hex(raw_bytes[5:])
                 print(f'>> {cmd}')
             case 'response':
                 sw1, sw2 = handlers.args[-2:]
-                sw1sw2 = sw1 << 8 | sw2
-                if sw1 in (0x61, 0x6C):
-                    sw1sw2 = sw1sw2 & 0xFF00
-                    attempts_left = f'({sw2} bytes remaining)'
-                elif sw1 == 0x63:
-                    sw1sw2 = sw1sw2 & 0xFFF0
-                    attempts_left = f'({sw2 & 0x0F} attempts left)'
-                else:
-                    attempts_left = ''
-                
-                description = SW_list.get(sw1sw2, 'To be classified')
+
+                description, info_text = parse_sw(sw1, sw2)
+
                 if handlers.args[0]:
                     print(f'<< {bytes_to_hex(handlers.args[0])}')
-                print(f'<< {sw1:02x}{sw2:02x} [ {description} {attempts_left}]')
+                print(f'<< {sw1:02x}{sw2:02x} [{description} {info_text}]')
             case _:
                 print(f'Unknown event {handlers.type}')
 
@@ -83,7 +90,7 @@ class Reader:
                 print('Reader: context has been released.')
 
  
-    def plain_apdu(self, cmd:str|list, exp_sw1:int | None = None, exp_sw2 : int | None = None, cmd_name:str=None) -> CardResponse:
+    def plain_apdu(self, cmd:str|list, exp_sw1:int|None=None, exp_sw2:int|None=None, cmd_name:str=None) -> CardResponse:
 
         if isinstance(cmd, str):
             cmd = hex_to_bytes(cmd)
@@ -109,18 +116,14 @@ class Reader:
         if is_sw1_mismatch or is_sw2_mismatch:
             exp_sw1_str = f'{exp_sw1:02x}' if exp_sw1 is not None else 'xx'
             exp_sw2_str = f'{exp_sw2:02x}' if exp_sw2 is not None else 'xx'
-            sw1sw2 = sw1 << 8 | sw2
 
-            if sw1 == 0x63:
-                attempts_left = sw2 & 0x0F
-                sw1sw2 = sw1sw2 & 0xFFF0
-            else:
-                attempts_left = ''
-            
-            description = SW_list.get(sw1sw2, 'To be classified')
-            raise SWMismatchException(f"\n\nCard response error: {description} {attempts_left}"
+            description, info_text = parse_sw(sw1, sw2)
+            # extra = f' {attempts_left}' if attempts_left else ''
+
+            raise SWMismatchException(f"\n\nCard response error: {description} {info_text}"
                                         f"\nexpected: {exp_sw1_str}{exp_sw2_str} "
                                         f"\ngot:      {sw1:02x}{sw2:02x} ")
+    
         return CardResponse(resp, sw1, sw2)
 
 
