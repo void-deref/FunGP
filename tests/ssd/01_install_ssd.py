@@ -1,4 +1,4 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, lv_list, lv_hex
+from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, SecurityLevel, lv_list, lv_hex
 from params import isd_keyset, ssd_pkg, ssd_aid
 
 
@@ -29,7 +29,7 @@ def install_applet():
             for_install,
             0x90, 0x00,
             'INSTALL[for install and make selectable]',
-            is_secured=True
+            security_level=SecurityLevel.C_MAC
         )
 
 install_applet()

@@ -118,7 +118,6 @@ class Reader:
             exp_sw2_str = f'{exp_sw2:02x}' if exp_sw2 is not None else 'xx'
 
             description, info_text = parse_sw(sw1, sw2)
-            # extra = f' {attempts_left}' if attempts_left else ''
 
             raise SWMismatchException(f"\n\nCard response error: {description} {info_text}"
                                         f"\nexpected: {exp_sw1_str}{exp_sw2_str} "

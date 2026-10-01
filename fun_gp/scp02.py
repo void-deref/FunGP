@@ -1,5 +1,11 @@
 from fun_gp import bytes_to_hex, hex_to_bytes
 from Crypto.Cipher import DES3, DES
+from enum import IntEnum
+
+class SecurityLevel(IntEnum):
+    NO_SECURITY_LEVEL = 0x00
+    C_MAC             = 0x01
+    C_DECRYPTION      = 0x03
 
 
 class SCP02:
@@ -15,9 +21,7 @@ class SCP02:
         self.IV = bytes([0] * 8)
         self.authenticated = False
 
-
-    def make_scp02_packet(self, cmd:str|list) ->list[int]:
-
+    def make_scp02_c_mac(self, cmd:str|list) ->list[int]:
         if isinstance(cmd, str):
             cmd = hex_to_bytes(cmd)
 
@@ -31,6 +35,25 @@ class SCP02:
             raise ValueError(f'Expected 255 bytes for CDATA, but got {cmd[4]}')
         cmd += self._retail_mac(cmd)
         return cmd
+
+    def make_scp02_c_decryption(self, cmd:str|list) ->list[int]:
+        cmd = self.make_scp02_c_mac(cmd)
+
+        if (cmd[4] == 0x08): # there are C-MAC only in payload, which shouldn't be ciphered.
+            return cmd       # bail out
+        
+        header = cmd[0:5]
+        cdata  = cmd[5:-8] # strip off the command header and C-MAC
+        c_mac  = cmd[-8:] 
+        cdata  = self._padding(cdata) # apply padding
+        header[4] = len(cdata) + 8   # update Lc field with the new length of payload
+
+        if (header[4] > 255):
+            raise ValueError(f'Expected 255 bytes for CDATA, but got {header[4]}')
+        
+        cdata  = list(self._apply_3des_cbc(cdata, self.skey_enc))
+        return header + cdata + c_mac
+        
 
     
     def init_update(self, response, host_challenge):
@@ -56,10 +79,10 @@ class SCP02:
         return counter, card_challenge, host_challenge
 
 
-    def external_authenticate(self, counter, card_challenge, host_challenge):
+    def external_authenticate(self, counter, card_challenge, host_challenge, security_level:int=SecurityLevel.C_MAC):
         # GP, appendix E.4.2.2: host authentication cryptogram
         host_crypto  = self._host_crypto(counter, card_challenge, host_challenge)
-        ext_auth_cmd = [0x80, 0x82, 0x01, 0x00, 0x08] + host_crypto
+        ext_auth_cmd = [0x80, 0x82, security_level, 0x00, 0x08] + host_crypto
         ext_auth_cmd[0] &= 0xFC # clean channel indication
         ext_auth_cmd[0] |= 0x04 # set GP proprietary SM flag
         ext_auth_cmd[4] += 8
@@ -110,16 +133,35 @@ class SCP02:
         return session_key
 
 
-    def _apply_3des_cbc(self, plain_text, key:list[int]):
+    def _apply_3des_cbc(self, plain_text:str|list[int], key:str|list[int]):
         if isinstance(key, str):
-            key = bytes(hex_to_bytes(key))
+            key = hex_to_bytes(key)
+        key = bytes(key)
 
-        if isinstance(key, list):
-            key = bytes(key)
+        if isinstance(plain_text, str):
+            plain_text = hex_to_bytes(plain_text)
+        plain_text = bytes(plain_text)
         
         # 3DES in CBC mode with IV of 8 bytes length all equal '00'. See GP 2.3, appendix E.3
-        cipher = DES3.new(key, DES3.MODE_CBC, (b'\x00' * 8))
-        return cipher.encrypt(bytes(plain_text))
+        des3_cbc = DES3.new(key, DES3.MODE_CBC, (b'\x00' * 8))
+        result   = des3_cbc.encrypt(plain_text)
+        return bytes(result)
+
+
+    def _apply_des_ecb(self, plain_text:str|list[int], key:str|list[int]):
+        
+        if isinstance(key, str):
+            key = hex_to_bytes(key)
+        key = bytes(key)
+
+        if isinstance(plain_text, str):
+            plain_text = hex_to_bytes(plain_text)
+        plain_text = bytes(plain_text)
+
+        des_ecb  = DES.new(key, DES.MODE_ECB)
+        result   = des_ecb.encrypt(plain_text)
+        
+        return bytes(result)
 
 
     def _parse_card_response(self, response):

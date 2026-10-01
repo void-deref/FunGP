@@ -5,8 +5,8 @@ from fun_gp.utils import \
     calculate_luhn_checksum, parse_tlv, parse_card_resources, parse_status
 
 from fun_gp.reader import Reader
-from fun_gp.scp02 import SCP02
 from fun_gp.ccm import CCM, ForLoad, LoadParams, ForInstall, InstallParams
+from fun_gp.scp02 import SecurityLevel, SCP02
 from fun_gp.smart_card import SmartCard
 from pathlib import Path
 

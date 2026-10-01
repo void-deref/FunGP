@@ -1,4 +1,4 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, lv_hex
+from fun_gp import Reader, SmartCard, SCP02, CCM, SecurityLevel, lv_hex
 
 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
@@ -23,7 +23,7 @@ def get_data_scp02():
         isd.transmit('00A4 0400' + lv_hex('a000000151000000'), 0x90, 0x00, 'SELECT: isd')
         isd.mutual_auth()
         for cmd, sw1, sw2, name in data_list:
-            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name, is_secured=True)
+            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name, security_level=SecurityLevel.C_MAC)
 
 
 def get_data_plain():
@@ -32,7 +32,7 @@ def get_data_plain():
         isd.transmit('00A4 0400' + lv_hex('a000000151000000'), 0x90, 0x00, 'SELECT: isd')
 
         for cmd, sw1, sw2, name in data_list:
-            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name, is_secured=False)
+            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name, security_level=SecurityLevel.C_MAC)
 
 def main():
     over_scp02 = True

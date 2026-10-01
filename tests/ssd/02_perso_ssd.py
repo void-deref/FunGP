@@ -1,4 +1,4 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, hex_to_bytes, bytes_to_hex, lv_hex
+from fun_gp import Reader, SmartCard, SCP02, CCM, SecurityLevel, hex_to_bytes, bytes_to_hex, lv_hex
 from Crypto.Cipher import DES3, DES
 from params import isd_keyset, ssd_aid, ssd_keyset
 
@@ -8,26 +8,30 @@ def install_for_perso(isd:SmartCard, ssd_aid:str):
         '80e6 2000' + lv_hex('0000' + lv_hex(ssd_aid) + '000000'),
         0x90, 0x00,
         'INSTALL [for personalization] my SSD',
-        is_secured=True
+        security_level=SecurityLevel.C_MAC
     )
 
 
-def encrypt_key(isd:SmartCard, ssd_key:str) -> str:
-    key_padded    = isd._scp02._padding(hex_to_bytes(ssd_key))
-    key_encrypted = isd._scp02._apply_3des_cbc(key_padded, isd._scp02.skey_enc)
+def encrypt_key(isd:SmartCard, ssd_key:str|list[int]) -> str:
+    if isinstance(ssd_key, str):
+        ssd_key = hex_to_bytes(ssd_key)
 
-    print(f'Key padded   : {bytes_to_hex(key_padded)}')
-    print(f'Key encrypted: {bytes_to_hex(key_encrypted)}')
+    key_encrypted = isd._scp02._apply_des_ecb(ssd_key, isd._scp02.skey_dek[0:8])
+
+    print(f'Original key : {bytes_to_hex(ssd_key)}')
+    print(f'Encrypted Key: {bytes_to_hex(key_encrypted)}')
+
     return key_encrypted
 
 
-def calculate_kcv(isd:SmartCard, ssd_key:str) -> str:
-    padded_kcv = isd._scp02._padding(hex_to_bytes('00000000 00000000'))
-    kcv        = isd._scp02._apply_3des_cbc(padded_kcv, hex_to_bytes(ssd_key))
+def calculate_kcv(isd:SmartCard, ssd_key:str|list[int]) -> str:
+    if isinstance(ssd_key, str):
+        ssd_key = hex_to_bytes(ssd_key)
+    
+    kcv = isd._scp02._apply_des_ecb(hex_to_bytes('00000000 00000000'), ssd_key[0:8])
     kcv = kcv[0:3]
     kcv = bytes_to_hex(kcv)
 
-    print(f'KCV padded   : {bytes_to_hex(padded_kcv)}')
     print(f'KCV          : {kcv}')
     return kcv
 
@@ -55,16 +59,17 @@ def personalize_applet():
         # install_for_perso(isd, ssd_aid)
 
         key_enc = encrypt_key(isd, ssd_keyset[0])
-        key_mac = encrypt_key(isd, ssd_keyset[1])
-        key_dek = encrypt_key(isd, ssd_keyset[2])
-
         kcv_enc = calculate_kcv(isd, ssd_keyset[0])
+        
+        key_mac = encrypt_key(isd, ssd_keyset[1])
         kcv_mac = calculate_kcv(isd, ssd_keyset[1])
+
+        key_dek = encrypt_key(isd, ssd_keyset[2])
         kcv_dek = calculate_kcv(isd, ssd_keyset[2])
 
         crt_enc = compile_key_ctr('18', '01', '20', kcv_enc) # C-ENC: 18
         crt_mac = compile_key_ctr('14', '02', '20', kcv_mac) # C-MAC: 14
-        crt_dek = compile_key_ctr('48', '03', '20', kcv_dek) # C-DEK: 14
+        crt_dek = compile_key_ctr('48', '03', '20', kcv_dek) # C-DEK: 48
 
         # GPCS 2.3, 11.11.4
         key_info_data = '00b9' + lv_hex(crt_enc + crt_mac + crt_dek) 
@@ -75,7 +80,7 @@ def personalize_applet():
         cmd = lv_hex(key_info_data + sym_key_scheme)
         # print(cmd)
         
-        isd.transmit('80E2 8800' + cmd, 0x90, 0x00, 'Store data', is_secured=True)
+        isd.transmit('80E2 8800' + cmd, 0x90, 0x00, 'Store data', security_level=SecurityLevel.C_MAC)
 
 
 personalize_applet()
