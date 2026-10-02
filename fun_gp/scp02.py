@@ -5,7 +5,9 @@ from enum import IntEnum
 class SecurityLevel(IntEnum):
     NO_SECURITY_LEVEL = 0x00
     C_MAC             = 0x01
+    R_MAC             = 0x10
     C_DECRYPTION      = 0x03
+    R_ENCRYPTION      = 0x30
 
 
 class SCP02:

@@ -1,6 +1,7 @@
 from fun_gp import SCP02, SecurityLevel, CCM, LoadParams, InstallParams
 import os
 
+LOAD_COMMAND_CHUNK_SIZE:int = 234
 
 class SmartCard:
     def __init__(self, plain_apdu:callable, scp02:SCP02=None, ccm:CCM=None):
@@ -16,11 +17,13 @@ class SmartCard:
             security_level:int=SecurityLevel.NO_SECURITY_LEVEL
         ) -> tuple[list[int], int, int]:
 
-        match security_level:
-            case SecurityLevel.C_MAC:
-                cmd = self._scp02.make_scp02_c_mac(cmd)
-            case SecurityLevel.C_DECRYPTION:
-                cmd = self._scp02.make_scp02_c_decryption(cmd)
+        if (security_level == SecurityLevel.C_MAC)     \
+            or (security_level == SecurityLevel.R_MAC) \
+            or (security_level == (SecurityLevel.C_MAC | SecurityLevel.R_MAC)):
+            cmd = self._scp02.make_scp02_c_mac(cmd)
+        elif (security_level == SecurityLevel.C_DECRYPTION) \
+            or (security_level == (SecurityLevel.C_DECRYPTION | SecurityLevel.R_MAC)):
+            cmd = self._scp02.make_scp02_c_decryption(cmd)
 
         return self._plain_apdu(cmd, exp_sw1, exp_sw2, cmd_name)
 
@@ -82,7 +85,7 @@ class SmartCard:
         self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', security_level=security_level)
         
         # LOAD
-        cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=234)
+        cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=LOAD_COMMAND_CHUNK_SIZE)
         for chunk in cap_chunks:
             self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', security_level=security_level)
 
@@ -147,7 +150,7 @@ class SmartCard:
         self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', security_level=security_level)
         
         # LOAD
-        cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=247)
+        cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=LOAD_COMMAND_CHUNK_SIZE)
         for chunk in cap_chunks:
             self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', security_level=security_level)
         
