@@ -9,9 +9,9 @@ applet_cap_path = APPLET_PATH / 'sd_secured_applet.cap'
 
 def store_secret(isd:SmartCard, msg:bytes, coding:str='latin-1'):
     cdata = msg
-    isd.transmit('8020 0000' + lv_hex(cdata), 0x90, 0x00, 'store the secret')
+    isd.transmit('8020 0000' + lv_hex(cdata), 0x90, 0x00, 'Store the AES key')
     
-    print(f"the secret '{msg}' has been stored\n")
+    print(f"Secret key:    set\n")
 
 
 def set_peronal_info(isd:SmartCard, coding:str='latin-1'):
@@ -26,39 +26,10 @@ def set_peronal_info(isd:SmartCard, coding:str='latin-1'):
     cdata = lv_hex(perso_data + duties)
     _, _,_ = isd.transmit('8024 0000' + cdata, 0x90, 0x00, 'Set personal data')
 
-
-def get_personal_info(isd:SmartCard, dh:DiffieHellman, security_level: int, coding:str='latin-1'):
-
-    isd.change_security_level(SecurityLevel.NO_SECURITY_LEVEL)
-
-    resp, _,_ = isd.transmit('8022 0000', 0x90, 0x00, 'Get personal data')
-    
-    resp = dh.aes_decrypt(resp)
-    
-    total_len = len(resp)
-    offset = 0
-    length = 0
-
-    tags = {
-        0x11:"Фамилия",    0x12:"Имя",     0x13:"Отчество",
-        0x14:"Департамент", 0x15:"Отдел", 0x16:"Должность"
-    }
-    
-    print('\n\t\t\t***ДАННЫЕ ДЕРЖАТЕЛЯ КАРТЫ***')
-    while offset < total_len:
-        tag     = resp[offset]
-        offset += 1
-        length  = resp[offset]
-        offset += 1
-        field   = bytes(resp[offset:offset + length]).decode(coding)
-        print(f"\t| {tags.get(tag, 'Unknow field'):<15} | {field:<30} |")
-        offset += length
-    print('\n')
-
-    isd.change_security_level(security_level)
+    print(f"Personal data: set\n")
 
 
-def sd_based_security():
+def initialize_applet():
     sec_level   = SecurityLevel.C_DECRYPTION
     aes_16_key = hex_to_bytes("0102030405060708 0102030405060708")
     coding      = 'utf-16-be'
@@ -71,11 +42,4 @@ def sd_based_security():
         store_secret(isd, aes_16_key)
         set_peronal_info(isd, coding)
 
-        dh = DiffieHellman()
-        dh.init_aes_cipher(aes_16_key[0:16])
-        get_personal_info(isd, dh, sec_level, coding)
-
-        set_peronal_info(isd, coding)
-        get_personal_info(isd, dh, sec_level, coding)
-
-sd_based_security()
+initialize_applet()
