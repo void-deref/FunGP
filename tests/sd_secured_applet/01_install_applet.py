@@ -9,6 +9,11 @@ def install_applet():
         isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
         isd.mutual_auth(security_level=sec_level)
-        isd.install_app_scp02(applet_cap_path, InstallParams(), exp_sw1=0x90, exp_sw2=0x00, security_level=sec_level)
+        isd.install_app_scp02(
+            applet_cap_path,
+            InstallParams('Thirty two bytes long AES seckey'.encode('latin-1')),
+            exp_sw1=0x90, exp_sw2=0x00,
+            security_level=sec_level
+        )
 
 install_applet()
