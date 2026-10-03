@@ -2,6 +2,8 @@ from fun_gp import Reader, SecurityLevel, SmartCard, SCP02, CCM, bytes_to_hex, h
 from ECDH import DiffieHellman
 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
+
+# https://github.com/void-deref/ISD_secured_applet
 applet_cap_path = APPLET_PATH / 'sd_secured_applet.cap'
 
 
