@@ -7,14 +7,14 @@ isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E
 applet_cap_path = APPLET_PATH / 'sd_secured_applet.cap'
 
 
-def store_secret(isd:SmartCard, msg:bytes, security_level:SecurityLevel, coding:str='latin-1'):
+def store_secret(isd:SmartCard, msg:bytes, coding:str='latin-1'):
     cdata = msg
-    isd.transmit('8020 0000' + lv_hex(cdata), 0x90, 0x00, 'store the secret', security_level=security_level)
+    isd.transmit('8020 0000' + lv_hex(cdata), 0x90, 0x00, 'store the secret')
     
     print(f"the secret '{msg}' has been stored\n")
 
 
-def set_peronal_info(isd:SmartCard, security_level:SecurityLevel, coding:str='latin-1'):
+def set_peronal_info(isd:SmartCard, coding:str='latin-1'):
     perso_data = "11" + lv_hex("Исламов".encode(coding))\
                + "12" + lv_hex("Тельман".encode(coding)) \
                + "13" + lv_hex("Исламович".encode(coding))
@@ -24,11 +24,14 @@ def set_peronal_info(isd:SmartCard, security_level:SecurityLevel, coding:str='la
                + "16" + lv_hex("Суетолог".encode(coding))
 
     cdata = lv_hex(perso_data + duties)
-    _, _,_ = isd.transmit('8024 0000' + cdata, 0x90, 0x00, 'Set personal data', security_level=security_level)
+    _, _,_ = isd.transmit('8024 0000' + cdata, 0x90, 0x00, 'Set personal data')
 
 
-def get_personal_info(isd:SmartCard, dh:DiffieHellman, security_level:SecurityLevel, coding:str='latin-1'):
-    resp, _,_ = isd.transmit('8022 0000', 0x90, 0x00, 'Get personal data', security_level=security_level)
+def get_personal_info(isd:SmartCard, dh:DiffieHellman, security_level: int, coding:str='latin-1'):
+
+    isd.change_security_level(SecurityLevel.NO_SECURITY_LEVEL)
+
+    resp, _,_ = isd.transmit('8022 0000', 0x90, 0x00, 'Get personal data')
     
     resp = dh.aes_decrypt(resp)
     
@@ -52,6 +55,8 @@ def get_personal_info(isd:SmartCard, dh:DiffieHellman, security_level:SecurityLe
         offset += length
     print('\n')
 
+    isd.change_security_level(security_level)
+
 
 def sd_based_security():
     sec_level   = SecurityLevel.C_DECRYPTION
@@ -63,14 +68,14 @@ def sd_based_security():
         isd.transmit('00a4 0400' + lv_hex('A000000086 53442053656375726564'), 0x90, 0x00, cmd_name='Select ISD secured applet')
         isd.mutual_auth(security_level=sec_level)
 
-        store_secret(isd, aes_16_key, sec_level)
-        set_peronal_info(isd, sec_level, coding)
+        store_secret(isd, aes_16_key)
+        set_peronal_info(isd, coding)
 
         dh = DiffieHellman()
         dh.init_aes_cipher(aes_16_key[0:16])
-        get_personal_info(isd, dh, SecurityLevel.NO_SECURITY_LEVEL, coding)
+        get_personal_info(isd, dh, sec_level, coding)
 
-        set_peronal_info(isd, sec_level, coding)
-        get_personal_info(isd, dh, SecurityLevel.NO_SECURITY_LEVEL, coding)
+        set_peronal_info(isd, coding)
+        get_personal_info(isd, dh, sec_level, coding)
 
 sd_based_security()

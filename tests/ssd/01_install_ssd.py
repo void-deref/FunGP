@@ -3,10 +3,11 @@ from params import isd_keyset, ssd_pkg, ssd_aid
 
 
 def install_applet():
+    sec_level = SecurityLevel.C_MAC
     with Reader() as reader:
         isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
-        isd.mutual_auth()
+        isd.mutual_auth(security_level=sec_level)
 
         for_install = isd._ccm.make_cmd_install_for_install(
             load_file_aid  = 'A0000001515350',
@@ -28,8 +29,7 @@ def install_applet():
         isd.transmit(
             for_install,
             0x90, 0x00,
-            'INSTALL[for install and make selectable]',
-            security_level=SecurityLevel.C_MAC
+            'INSTALL[for install and make selectable]'
         )
 
 install_applet()

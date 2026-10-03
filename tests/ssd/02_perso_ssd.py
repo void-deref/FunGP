@@ -7,8 +7,7 @@ def install_for_perso(isd:SmartCard, ssd_aid:str):
     isd.transmit(
         '80e6 2000' + lv_hex('0000' + lv_hex(ssd_aid) + '000000'),
         0x90, 0x00,
-        'INSTALL [for personalization] my SSD',
-        security_level=SecurityLevel.C_MAC
+        'INSTALL [for personalization] my SSD'
     )
 
 
@@ -51,10 +50,12 @@ def compile_key_ctr(usage_qlfr:str, key_id:str, kvn:str, kcv:str) -> str:
 
 
 def personalize_applet():
+    sec_level = SecurityLevel.C_MAC
+
     with Reader() as reader:
         isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
-        isd.mutual_auth()
+        isd.mutual_auth(security_level=sec_level)
 
         # install_for_perso(isd, ssd_aid)
 
@@ -80,7 +81,7 @@ def personalize_applet():
         cmd = lv_hex(key_info_data + sym_key_scheme)
         # print(cmd)
         
-        isd.transmit('80E2 8800' + cmd, 0x90, 0x00, 'Store data', security_level=SecurityLevel.C_MAC)
+        isd.transmit('80E2 8800' + cmd, 0x90, 0x00, 'Store data')
 
 
 personalize_applet()

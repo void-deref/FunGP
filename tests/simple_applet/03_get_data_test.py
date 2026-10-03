@@ -18,12 +18,14 @@ data_list  = {
 }
 
 def get_data_scp02():
+    sec_level = SecurityLevel.C_MAC
     with Reader() as reader:
         isd = SmartCard(reader.plain_apdu, scp02=SCP02(isd_keyset), ccm=CCM())
         isd.transmit('00A4 0400' + lv_hex('a000000151000000'), 0x90, 0x00, 'SELECT: isd')
-        isd.mutual_auth()
+        isd.mutual_auth(security_level=sec_level)
+        
         for cmd, sw1, sw2, name in data_list:
-            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name, security_level=SecurityLevel.C_MAC)
+            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name)
 
 
 def get_data_plain():
@@ -32,7 +34,7 @@ def get_data_plain():
         isd.transmit('00A4 0400' + lv_hex('a000000151000000'), 0x90, 0x00, 'SELECT: isd')
 
         for cmd, sw1, sw2, name in data_list:
-            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name, security_level=SecurityLevel.C_MAC)
+            isd.transmit(cmd=cmd, exp_sw1=sw1, exp_sw2=sw2, cmd_name=name)
 
 def main():
     over_scp02 = True

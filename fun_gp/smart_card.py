@@ -8,21 +8,21 @@ class SmartCard:
         self._plain_apdu = plain_apdu
         self._scp02      = scp02
         self._ccm        = ccm
+        self.security_level = SecurityLevel.NO_SECURITY_LEVEL
 
 
     def transmit(self,
             cmd:str|list,
             exp_sw1:int|None = None, exp_sw2:int|None = None,
             cmd_name:str='',
-            security_level:int=SecurityLevel.NO_SECURITY_LEVEL
         ) -> tuple[list[int], int, int]:
 
-        if (security_level == SecurityLevel.C_MAC)     \
-            or (security_level == SecurityLevel.R_MAC) \
-            or (security_level == (SecurityLevel.C_MAC | SecurityLevel.R_MAC)):
+        if (self.security_level == SecurityLevel.C_MAC)     \
+            or (self.security_level == SecurityLevel.R_MAC) \
+            or (self.security_level == (SecurityLevel.C_MAC | SecurityLevel.R_MAC)):
             cmd = self._scp02.make_scp02_c_mac(cmd)
-        elif (security_level == SecurityLevel.C_DECRYPTION) \
-            or (security_level == (SecurityLevel.C_DECRYPTION | SecurityLevel.R_MAC)):
+        elif (self.security_level == SecurityLevel.C_DECRYPTION) \
+            or (self.security_level == (SecurityLevel.C_DECRYPTION | SecurityLevel.R_MAC)):
             cmd = self._scp02.make_scp02_c_decryption(cmd)
 
         return self._plain_apdu(cmd, exp_sw1, exp_sw2, cmd_name)
@@ -51,8 +51,13 @@ class SmartCard:
             )
         else:
             self._scp02.authenticated = True
+            self.security_level = security_level
 
 
+    def change_security_level(self, security_level:int=SecurityLevel):
+        self.security_level = security_level
+
+        
     def install_app_scp02(
             self, cap_path:str, install_params:InstallParams,
             load_file_aid: str|None = None,
@@ -60,7 +65,6 @@ class SmartCard:
             instance_aid:  str|None  = None,
             exp_sw1:int|None = None,
             exp_sw2:int|None = None,
-            security_level:int=SecurityLevel.C_MAC
         ):
         """
         Install an applet through the SCP02 protocol.  
@@ -82,16 +86,16 @@ class SmartCard:
         
         # INSTALL[for load]
         for_load = self._ccm.make_cmd_install_for_load(load_file_aid, None, LoadParams())
-        self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', security_level=security_level)
+        self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]')
         
         # LOAD
         cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=LOAD_COMMAND_CHUNK_SIZE)
         for chunk in cap_chunks:
-            self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', security_level=security_level)
+            self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD')
 
         # INSTALL[for install and make selectable]
         for_install = self._ccm.make_cmd_install_for_install(load_file_aid, module_aid, instance_aid, install_params)
-        self.transmit(for_install, exp_sw1, exp_sw2, 'INSTALL[for install and make selectable]', security_level=security_level)
+        self.transmit(for_install, exp_sw1, exp_sw2, 'INSTALL[for install and make selectable]')
         
         # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Lcn' is greater than 'self.cap_file_size'.
         # The difference is C * N + T, where
@@ -124,7 +128,7 @@ class SmartCard:
             aid_str = package_aid if len(package_aid) != 0 else applet_aid
 
         cmd = self._ccm.make_cmd_delete(package_aid, applet_aid)
-        self.transmit(cmd, exp_sw1, exp_sw2, f'UNINSTALL [{aid_str}]', security_level=security_level)
+        self.transmit(cmd, exp_sw1, exp_sw2, f'UNINSTALL [{aid_str}]')
 
 
     def install_lib_scp02(self,
@@ -147,12 +151,12 @@ class SmartCard:
 
         # INSTALL[for load]
         for_load = self._ccm.make_cmd_install_for_load(load_file_aid, None, LoadParams())
-        self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]', security_level=security_level)
+        self.transmit(for_load, exp_sw1, exp_sw2, 'INSTALL[for load]')
         
         # LOAD
         cap_chunks = self._ccm.make_cmd_load(cap_bytes, chunk_size=LOAD_COMMAND_CHUNK_SIZE)
         for chunk in cap_chunks:
-            self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD', security_level=security_level)
+            self.transmit(chunk, exp_sw1, exp_sw2, 'LOAD')
         
         # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Lcn' is greater than 'self.cap_file_size'.
         # The difference is C * N + T, where

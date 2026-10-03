@@ -23,6 +23,7 @@ class SCP02:
         self.IV = bytes([0] * 8)
         self.authenticated = False
 
+
     def make_scp02_c_mac(self, cmd:str|list) ->list[int]:
         if isinstance(cmd, str):
             cmd = hex_to_bytes(cmd)
@@ -37,6 +38,7 @@ class SCP02:
             raise ValueError(f'Expected 255 bytes for CDATA, but got {cmd[4]}')
         cmd += self._retail_mac(cmd)
         return cmd
+
 
     def make_scp02_c_decryption(self, cmd:str|list) ->list[int]:
         cmd = self.make_scp02_c_mac(cmd)
@@ -57,7 +59,6 @@ class SCP02:
         return header + cdata + c_mac
         
 
-    
     def init_update(self, response, host_challenge):
         counter, card_challenge, card_cryptogram = self._parse_card_response(response)
 
