@@ -4,7 +4,7 @@ isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E
 applet_cap_path = APPLET_PATH / 'sd_secured_applet.cap'
 
 def install_applet():
-    sec_level = SecurityLevel.C_DECRYPTION
+    sec_level = SecurityLevel.C_MAC
     with Reader() as reader:
         isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
