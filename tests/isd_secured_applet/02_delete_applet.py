@@ -18,6 +18,6 @@ def install_applet():
 
         isd.uninstall_app_scp02('A000000084') # simple_applet
         isd.uninstall_app_scp02('A0000000856C69627574696C73') # libutils
-        isd.uninstall_app_scp02('A000000086') # sd_secured_applet
+        isd.uninstall_app_scp02('A000000086') # isd_secured_applet
 
 install_applet()

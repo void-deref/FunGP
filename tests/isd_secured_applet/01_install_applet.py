@@ -3,7 +3,7 @@ from fun_gp import Reader, SmartCard, SecurityLevel, SCP02, CCM, InstallParams, 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
 
 # https://github.com/void-deref/ISD_secured_applet
-applet_cap_path = APPLET_PATH / 'sd_secured_applet.cap'
+applet_cap_path = APPLET_PATH / 'isd_secured_applet.cap'
 
 def install_applet():
     sec_level = SecurityLevel.C_MAC
