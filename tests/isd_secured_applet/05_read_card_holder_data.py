@@ -1,10 +1,10 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, bytes_to_hex, hex_to_bytes, lv_hex, APPLET_PATH
+from fun_gp import Reader, SmartCard, SCP02, CCM, bytes_to_hex, hex_to_bytes, lv_hex, RESOURCES_DIR
 from AESHandler import AESHandler
 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
 
 # https://github.com/void-deref/ISD_secured_applet
-applet_cap_path = APPLET_PATH / 'sd_secured_applet.cap'
+applet_cap_path = RESOURCES_DIR / 'sd_secured_applet.cap'
 
 def get_personal_info(isd:SmartCard, dh:AESHandler, coding:str='latin-1'):
 

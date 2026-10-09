@@ -1,11 +1,11 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, SecurityLevel, APPLET_PATH
+from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, SecurityLevel, RESOURCES_DIR
 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
 
 # https://github.com/void-deref/SimpleApplet
-applet_cap_path = APPLET_PATH / 'SimpleApplet.cap'
+applet_cap_path = RESOURCES_DIR / 'SimpleApplet.cap'
 # https://github.com/void-deref/libutils
-lib_cap_path    = APPLET_PATH / 'fun.libutils.cap'
+lib_cap_path    = RESOURCES_DIR / 'fun.libutils.cap'
 
 def install_applet():
     sec_level = SecurityLevel.C_MAC

@@ -1,9 +1,9 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, SecurityLevel, APPLET_PATH
+from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, SecurityLevel, RESOURCES_DIR
 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
 
 # https://github.com/void-deref/SecMsgApplet.git ; The cap-file must be located in folder 'resources'
-cap_path       = APPLET_PATH / 'SM_applet.cap'
+cap_path       = RESOURCES_DIR / 'SM_applet.cap'
 
 install_params = InstallParams(
     app_params = '000102030405060708090A0B0C0D0E0F 101112131415161718191A1B1C1D1E1F'

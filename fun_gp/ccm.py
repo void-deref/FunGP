@@ -45,13 +45,84 @@ class ForLoad:
         return len(self._build_list())
 
 
-class InstallParams:
-    def __init__(self, app_params:str=None):
-        self.app_params = [0xC9] + lv_list(app_params) if app_params != None else [0xC9, 0x00]
-        self.sys_params = [0xEF, 0x00]
+class SIMParams:
+    def __init__(
+            self, msl:str   ='16',
+            tar:str         ='544152',
+            text_length:str ='00',
+            menu_entries:str='00',
+            channels:str    ='00'
+        ):
+
+        access_domain = '01 00' # full access
+        priority      = 'FF'    # lowest priority
+        timers        = '00'    # no timers needed for this applet
+        # text_length   = '00'    # Applet hasn't menu, thus there is no need for text length attribute
+        # menu_entries  = '00'    # No menu entries
+        # channels      = '00'    # no channels required
+        msl           = lv_hex('01' + msl) # Minimum SPI1
+        tar           = lv_hex(tar)
+        
+        self.tag_ca = 'CA' + lv_hex(
+                                access_domain + priority + timers + text_length +
+                                menu_entries + channels + msl + tar
+                            )
+        
+        self.params_ef = [0xEF] + lv_list(self.tag_ca)
 
     def _build_list(self):
-        return self.app_params + self.sys_params
+        return self.params_ef
+
+    def __getitem__(self, index):
+        return self._build_list()[index]
+
+    def __len__(self):
+        return len(self._build_list())
+
+
+class UICCParams:
+    def __init__(self, msl:str='16', tar:str='544152'):
+        """
+        :param msl: exactly as SPI.1 byte, e.g. '16'
+        :param tar: a TAR value represented as hex string
+        """
+        self.priority      = [0xFF]       # lowest priority
+        self.timers        = [0x00]       # no timers needed for this applet
+        self.text_length   = [0x00]       # text length attribute
+        self.menu_entries  = [0x00]       # No menu entries
+        self.channels      = [0x00]       # There is no need in BIP channels
+        self.msl           = lv_list('01' + msl) # Abide the SPI1
+        self.tar           = lv_list(tar)
+        self.services      = [0x00]       # services
+
+        self.toolkit_params = [0x80] + lv_list(self.priority + self.timers + self.text_length + self.menu_entries +
+                                               self.channels + self.msl + self.tar + self.services)
+        
+        # fullu qualified ECP USIM AID: A0000000871002FF49FFFF89040B00FF
+        acc_domain = lv_list('00 0100 00' + lv_hex('A0000000871002FF49FFFF89040B00FF'))
+        self.uicc_fs = [0x81] + lv_list('00 0100 00')
+        self.usim_fs = [0x82] + lv_list('00 0100 00')
+
+        self.params_ea = [0xEA] + lv_list(self.toolkit_params + self.uicc_fs + self.usim_fs)
+
+    def _build_list(self):
+        return self.params_ea
+
+    def __getitem__(self, index):
+        return self._build_list()[index]
+
+    def __len__(self):
+        return len(self._build_list())
+
+
+
+class InstallParams:
+    def __init__(self, app_params:str=None, sim_params:SIMParams|UICCParams|list[int]=None):
+        self.app_params = [0xC9] + lv_list(app_params) if app_params else [0xC9, 0x00]
+        self.sim_params = sim_params[0:] if sim_params else []
+
+    def _build_list(self):
+        return self.app_params + self.sim_params
 
     def __getitem__(self, index):
         return self._build_list()[index]

@@ -1,9 +1,9 @@
-from fun_gp import Reader, SecurityLevel, SmartCard, SCP02, CCM, bytes_to_hex, hex_to_bytes, lv_hex, APPLET_PATH
+from fun_gp import Reader, SecurityLevel, SmartCard, SCP02, CCM, bytes_to_hex, hex_to_bytes, lv_hex, RESOURCES_DIR
 
 isd_keyset = ['404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F','404142434445464748494A4B4C4D4E4F']
 
 # https://github.com/void-deref/ISD_secured_applet
-applet_cap_path = APPLET_PATH / 'sd_secured_applet.cap'
+applet_cap_path = RESOURCES_DIR / 'sd_secured_applet.cap'
 
 
 def set_peronal_info(isd:SmartCard, coding:str='latin-1'):
