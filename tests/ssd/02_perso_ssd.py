@@ -35,7 +35,7 @@ def calculate_kcv(isd:SmartCard, ssd_key:str|list[int]) -> str:
     return kcv
 
 
-def compile_key_ctr(usage_qlfr:str, key_id:str, kvn:str, kcv:str) -> str:
+def compile_key_crt(usage_qlfr:str, key_id:str, kvn:str, kcv:str) -> str:
     # GPCS 2.3, table 11-92
     key_crt = 'B9' + lv_hex(
         f'95 01 {usage_qlfr}'   # [Usage qualifier (clause 11.1.9)]
@@ -57,7 +57,7 @@ def personalize_applet():
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
         isd.mutual_auth(security_level=sec_level)
 
-        # install_for_perso(isd, ssd_aid)
+        install_for_perso(isd, ssd_aid)
 
         key_enc = encrypt_key(isd, ssd_keyset[0])
         kcv_enc = calculate_kcv(isd, ssd_keyset[0])
@@ -68,9 +68,9 @@ def personalize_applet():
         key_dek = encrypt_key(isd, ssd_keyset[2])
         kcv_dek = calculate_kcv(isd, ssd_keyset[2])
 
-        crt_enc = compile_key_ctr('18', '01', '20', kcv_enc) # C-ENC: 18
-        crt_mac = compile_key_ctr('14', '02', '20', kcv_mac) # C-MAC: 14
-        crt_dek = compile_key_ctr('48', '03', '20', kcv_dek) # C-DEK: 48
+        crt_enc = compile_key_crt('18', '01', '20', kcv_enc) # C-ENC: 18
+        crt_mac = compile_key_crt('14', '02', '20', kcv_mac) # C-MAC: 14
+        crt_dek = compile_key_crt('48', '03', '20', kcv_dek) # C-DEK: 48
 
         # GPCS 2.3, 11.11.4
         key_info_data = '00b9' + lv_hex(crt_enc + crt_mac + crt_dek) 

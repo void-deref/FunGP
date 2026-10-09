@@ -26,10 +26,6 @@ def install_applet():
             privileges = lv_list('80'),
         )
 
-        isd.transmit(
-            for_install,
-            0x90, 0x00,
-            'INSTALL[for install and make selectable]'
-        )
+        isd.transmit(for_install, 0x90, 0x00, 'INSTALL[for install and make selectable]')
 
 install_applet()
