@@ -1,15 +1,11 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, SecurityLevel, hex_to_bytes, bytes_to_hex, lv_list, lv_hex
-from params import isd_keyset, ssd_keyset, ssd_pkg, ssd_aid
+from fun_gp import Reader, SmartCard, SCP02, CCM, InstallParams, SecurityLevel, RESOURCES_DIR, hex_to_bytes, bytes_to_hex, lv_list, lv_hex
+from params import isd_keyset, ssd_keyset, ssd_pkg, ssd_aid, isd_secured_applet_aid
 
-def install_for_perso(isd:SmartCard, ssd_aid:str):
-    isd.transmit(
-        '80e6 2000' + lv_hex('0000' + lv_hex(ssd_aid) + '000000'),
-        0x90, 0x00,
-        'INSTALL [for personalization] my SSD'
-    )
+# https://github.com/void-deref/ISD_secured_applet
+applet_cap_path = RESOURCES_DIR / 'isd_secured_applet.cap'
 
 
-def encrypt_key(isd:SmartCard, ssd_key:str|list[int]) -> str:
+def __encrypt_key(isd:SmartCard, ssd_key:str|list[int]) -> str:
     if isinstance(ssd_key, str):
         ssd_key = hex_to_bytes(ssd_key)
 
@@ -21,7 +17,7 @@ def encrypt_key(isd:SmartCard, ssd_key:str|list[int]) -> str:
     return key_encrypted
 
 
-def calculate_kcv(isd:SmartCard, ssd_key:str|list[int]) -> str:
+def __calculate_kcv(isd:SmartCard, ssd_key:str|list[int]) -> str:
     if isinstance(ssd_key, str):
         ssd_key = hex_to_bytes(ssd_key)
     
@@ -33,7 +29,7 @@ def calculate_kcv(isd:SmartCard, ssd_key:str|list[int]) -> str:
     return kcv
 
 
-def compile_key_crt(usage_qlfr:str, key_id:str, kvn:str, kcv:str) -> str:
+def __compile_key_crt(usage_qlfr:str, key_id:str, kvn:str, kcv:str) -> str:
     # GPCS 2.3, table 11-92
     key_crt = 'B9' + lv_hex(
         f'95 01 {usage_qlfr}'   # [Usage qualifier (clause 11.1.9)]
@@ -47,22 +43,37 @@ def compile_key_crt(usage_qlfr:str, key_id:str, kvn:str, kcv:str) -> str:
     return key_crt
 
 
+def install_for_perso(isd:SmartCard, ssd_aid:str):
+    isd.transmit(
+        '80e6 2000' + lv_hex('0000' + lv_hex(ssd_aid) + '000000'),
+        0x90, 0x00,
+        'INSTALL [for personalization] my SSD'
+    )
+
+
+def install_for_extradition(isd:SmartCard, ssd_aid:str):
+    extradition_params = ''
+    isd.transmit( # GP CS v.2.3, clause 11.5.2.3.4
+        '80e6 1000' + lv_hex(lv_hex(ssd_aid) + '00' + lv_hex(isd_secured_applet_aid) + '00' + lv_hex(extradition_params) + '00'),
+        0x90, 0x00,
+        'INSTALL [for extradition] my SSD'
+    )
+
+    
 def personalize_ssd(isd:SmartCard):
     
-    install_for_perso(isd, ssd_aid)
-
-    key_enc = encrypt_key(isd, ssd_keyset[0])
-    kcv_enc = calculate_kcv(isd, ssd_keyset[0])
+    key_enc = __encrypt_key(isd, ssd_keyset[0])
+    kcv_enc = __calculate_kcv(isd, ssd_keyset[0])
     
-    key_mac = encrypt_key(isd, ssd_keyset[1])
-    kcv_mac = calculate_kcv(isd, ssd_keyset[1])
+    key_mac = __encrypt_key(isd, ssd_keyset[1])
+    kcv_mac = __calculate_kcv(isd, ssd_keyset[1])
 
-    key_dek = encrypt_key(isd, ssd_keyset[2])
-    kcv_dek = calculate_kcv(isd, ssd_keyset[2])
+    key_dek = __encrypt_key(isd, ssd_keyset[2])
+    kcv_dek = __calculate_kcv(isd, ssd_keyset[2])
 
-    crt_enc = compile_key_crt('18', '01', '20', kcv_enc) # C-ENC: 18
-    crt_mac = compile_key_crt('14', '02', '20', kcv_mac) # C-MAC: 14
-    crt_dek = compile_key_crt('48', '03', '20', kcv_dek) # C-DEK: 48
+    crt_enc = __compile_key_crt('18', '01', '20', kcv_enc) # C-ENC: 18
+    crt_mac = __compile_key_crt('14', '02', '20', kcv_mac) # C-MAC: 14
+    crt_dek = __compile_key_crt('48', '03', '20', kcv_dek) # C-DEK: 48
 
     # GPCS 2.3, 11.11.4
     key_info_data = '00b9' + lv_hex(crt_enc + crt_mac + crt_dek) 
@@ -94,8 +105,8 @@ def install_ssd(isd:SmartCard):
         # the simulator accepts 800000, while real cards fail with SW 6A80.
         privileges = lv_list('80'),
     )
-
     isd.transmit(for_install, 0x90, 0x00, 'INSTALL[for install and make selectable]')
+
 
 
 def main():
@@ -104,7 +115,26 @@ def main():
         isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
         isd.mutual_auth(security_level=sec_level)
+
         install_ssd(isd)
+        install_for_perso(isd, ssd_aid)
         personalize_ssd(isd)
+
+    # for demonstration purpose only: instantiated SSD hasn't applet installation privileges
+    with Reader() as reader:
+        my_SSD = SmartCard(reader.plain_apdu, SCP02(ssd_keyset), CCM())
+        my_SSD.transmit('00a4 0400' + lv_hex(ssd_aid), 0x90, 0x00, 'Select my SSD')
+        my_SSD.mutual_auth(security_level=sec_level)
+
+        my_SSD.install_app_scp02(applet_cap_path, InstallParams(),exp_sw1=0x69, exp_sw2=0x85)
+        # install_for_extradition(isd, ssd_aid)
+    
+    with Reader() as reader:
+        isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
+        isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
+        isd.mutual_auth(security_level=sec_level)
+        
+        isd.install_app_scp02(applet_cap_path, InstallParams(),exp_sw1=0x90, exp_sw2=0x00)
+        install_for_extradition(isd, ssd_aid)
 
 main()

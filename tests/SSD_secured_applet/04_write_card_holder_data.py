@@ -1,0 +1,34 @@
+from fun_gp import Reader, SecurityLevel, SmartCard, SCP02, CCM, bytes_to_hex, hex_to_bytes, lv_hex, RESOURCES_DIR
+
+from params import ssd_keyset
+
+# https://github.com/void-deref/ISD_secured_applet
+applet_cap_path = RESOURCES_DIR / 'sd_secured_applet.cap'
+
+
+def set_peronal_info(my_SSD:SmartCard, coding:str='latin-1'):
+    perso_data = "11" + lv_hex("Исламов".encode(coding))\
+               + "12" + lv_hex("Тельман".encode(coding)) \
+               + "13" + lv_hex("Исламович".encode(coding))
+    duties     = "14" + lv_hex("Департамент IT продуктов".encode(coding)) \
+               + "15" + lv_hex("Отдел разработки дополнительных сервисов".encode(coding)) \
+               + "16" + lv_hex("Ведущий инженер".encode(coding)) \
+               + "17" + lv_hex("05.10.2036".encode(coding))
+
+    cdata = lv_hex(perso_data + duties)
+    _, _,_ = my_SSD.transmit('8024 0000' + cdata, 0x90, 0x00, 'Set personal data')
+    print(f"Personal data: set\n")
+
+
+def initialize_applet():
+    sec_level   = SecurityLevel.C_MAC
+    coding      = 'utf-16-be'
+
+    with Reader() as reader:
+        my_SSD = SmartCard(reader.plain_apdu, SCP02(ssd_keyset), CCM())
+        my_SSD.transmit('00a4 0400' + lv_hex('A000000086 4953442053656375726564'), 0x90, 0x00, cmd_name='Select ISD secured applet')
+        my_SSD.mutual_auth(security_level=sec_level)
+
+        set_peronal_info(my_SSD, coding)
+
+initialize_applet()
