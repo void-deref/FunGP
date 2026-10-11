@@ -151,7 +151,7 @@ class SCP02:
         return bytes(result)
 
 
-    def _apply_des_ecb(self, plain_text:str|list[int], key:str|list[int]):
+    def _apply_3des_ecb(self, plain_text:str|list[int], key:str|list[int]):
         
         if isinstance(key, str):
             key = hex_to_bytes(key)
@@ -161,7 +161,7 @@ class SCP02:
             plain_text = hex_to_bytes(plain_text)
         plain_text = bytes(plain_text)
 
-        des_ecb  = DES.new(key, DES.MODE_ECB)
+        des_ecb  = DES3.new(key, DES.MODE_ECB)
         result   = des_ecb.encrypt(plain_text)
         
         return bytes(result)

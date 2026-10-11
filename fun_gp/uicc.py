@@ -2,6 +2,7 @@ from fun_gp import  SCP80, CCM, ProParser, InstallParams, EventDownload
 
 from fun_gp import hex_to_bytes, lv_hex, lv_list
 
+LOAD_COMMAND_CHUNK_SIZE:int = 200
 
 class GenResult:
     def __init__(self, res:int = 0x00, add_info:list[int] = []):
@@ -122,28 +123,40 @@ class UICC:
         
 
 
-    def install_app_scp80(self, install_params:InstallParams, path_to_applet:str, chunk_size: int):
+    def install_app_scp80(
+            self, cap_path:str, install_params:InstallParams,
+            load_file_aid: str|None = None,
+            module_aid:    str|None = None,
+            instance_aid:  str|None  = None,
+            exp_sw1:int|None = None,
+            exp_sw2:int|None = None
+        ):
 
         if self.scp80 == None:
             raise ValueError('\'self.scp80\' parameter not initialized.')
         
         sms_counter = 0
-        cap_bytes, pkg_aid, app_aid = self.ccm.decomposite_cap_file(path_to_applet)
+        cap_bytes, pkg_aid, app_aid = self.ccm.decomposite_cap_file(cap_path)
 
+        # Mind the order: the value of module_aid depends on instance_aid
+        instance_aid  = instance_aid  or app_aid
+        module_aid    = module_aid    or instance_aid
+        load_file_aid = load_file_aid or pkg_aid
+        
         # INSTALL[for load]
         cmd_for_load = self.ccm.make_cmd_install_for_load(pkg_aid)
-        self.transmit(cmd_for_load + '00c0 0000 00', self.scp80, cmd_name='[SCP80] INSTALL(for load)')
+        self.transmit(cmd_for_load + '00c0 0000 00', cmd_name='[SCP80] INSTALL(for load)')
         sms_counter += 1
 
         # LOAD
-        cap_chunks  = self.ccm.make_cmd_load(cap_bytes, chunk_size, '00c0 0000 00')
+        cap_chunks  = self.ccm.make_cmd_load(cap_bytes, LOAD_COMMAND_CHUNK_SIZE, '00c0 0000 00')
         for chunk in cap_chunks:
-            self.transmit(chunk, self.scp80, cmd_name='[SCP80] LOAD')
+            self.transmit(chunk, cmd_name='[SCP80] LOAD')
             sms_counter += 1
 
         # INSTALL[for install and make selectable]
-        for_install = self.ccm.make_cmd_install_for_install(pkg_aid, app_aid, install_params)
-        self.transmit(for_install + '00c0 0000 00', self.scp80, cmd_name='INSTALL[for install and make selectable]')
+        for_install = self.ccm.make_cmd_install_for_install(load_file_aid, module_aid, instance_aid, install_params)
+        self.transmit(for_install + '00c0 0000 00', cmd_name='INSTALL[for install and make selectable]')
         
         # Note: 'LOAD.Lc1 + LOAD.Lc2 + LOAD.Ln' is greater than 'self.cap_file_size'.
         # The difference is C * N + T, where
@@ -163,4 +176,4 @@ class UICC:
             raise ValueError('\'self.scp80\' parameter not initialized.')
         
         cmd_delete = self.ccm.make_cmd_delete(applet_aid)
-        self.transmit(cmd_delete + '00c0 0000 00', self.scp80, cmd_name=f'DELETE [{applet_aid}]')
+        self.transmit(cmd_delete + '00c0 0000 00', cmd_name=f'DELETE [{applet_aid}]')

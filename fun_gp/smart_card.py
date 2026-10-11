@@ -17,12 +17,9 @@ class SmartCard:
             cmd_name:str='',
         ) -> tuple[list[int], int, int]:
 
-        if (self.security_level == SecurityLevel.C_MAC)     \
-            or (self.security_level == SecurityLevel.R_MAC) \
-            or (self.security_level == (SecurityLevel.C_MAC | SecurityLevel.R_MAC)):
+        if self.security_level in (SecurityLevel.C_MAC, SecurityLevel.R_MAC, (SecurityLevel.C_MAC | SecurityLevel.R_MAC)):
             cmd = self._scp02.make_scp02_c_mac(cmd)
-        elif (self.security_level == SecurityLevel.C_DECRYPTION) \
-            or (self.security_level == (SecurityLevel.C_DECRYPTION | SecurityLevel.R_MAC)):
+        elif self.security_level in (SecurityLevel.C_DECRYPTION, (SecurityLevel.C_DECRYPTION | SecurityLevel.R_MAC)):
             cmd = self._scp02.make_scp02_c_decryption(cmd)
 
         return self._plain_apdu(cmd, exp_sw1, exp_sw2, cmd_name)
@@ -111,8 +108,7 @@ class SmartCard:
     def uninstall_app_scp02(self,
             package_aid:str='',
             applet_aid:str='',
-            exp_sw1:int|None = None, exp_sw2:int|None = None,
-            security_level:int=SecurityLevel.C_MAC
+            exp_sw1:int|None = None, exp_sw2:int|None = None
         ):
         """
         Uninstalls previously installed applet. Note that uninstalling a package will
@@ -133,8 +129,7 @@ class SmartCard:
 
     def install_lib_scp02(self,
             lib_path:str,
-            exp_sw1:int|None = None, exp_sw2:int|None = None,
-            security_level:int=SecurityLevel.C_MAC
+            exp_sw1:int|None = None, exp_sw2:int|None = None
         ):
         """
         Install a library by means of SCP02 protocol.  
