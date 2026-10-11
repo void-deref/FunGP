@@ -1,10 +1,6 @@
-from fun_gp import Reader, SmartCard, SCP02, CCM, bytes_to_hex, hex_to_bytes, lv_hex, RESOURCES_DIR
+from fun_gp import Reader, SmartCard, SCP02, CCM, hex_to_bytes, lv_hex
 from AESHandler import AESHandler
-
 from params import ssd_keyset
-
-# https://github.com/void-deref/ISD_secured_applet
-applet_cap_path = RESOURCES_DIR / 'sd_secured_applet.cap'
 
 def get_personal_info(my_SSD:SmartCard, dh:AESHandler, coding:str='latin-1'):
 

@@ -1,8 +1,5 @@
-from fun_gp import Reader, SecurityLevel, SmartCard, SCP02, CCM, bytes_to_hex, hex_to_bytes, lv_hex, RESOURCES_DIR
-from params import ssd_keyset, ssd_pkg, ssd_aid, isd_secured_applet_aid
-
-# https://github.com/void-deref/ISD_secured_applet
-applet_cap_path = RESOURCES_DIR / 'sd_secured_applet.cap'
+from fun_gp import Reader, SecurityLevel, SmartCard, SCP02, CCM, hex_to_bytes, lv_hex
+from params import ssd_keyset
 
 
 def store_secret(my_SSD:SmartCard, msg:bytes, coding:str='latin-1'):

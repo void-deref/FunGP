@@ -1,5 +1,4 @@
 from fun_gp import Reader, SmartCard, SCP02, CCM, lv_hex
-
 from params import isd_keyset, ssd_keyset, ssd_aid, isd_aid
 
 
