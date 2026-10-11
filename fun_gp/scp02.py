@@ -15,7 +15,7 @@ class SCP02:
         
         self.enc = key_set[0]
         self.mac = key_set[1]
-        self.dec = key_set[2]
+        self.dek = key_set[2]
 
         self.skey_enc = None
         self.skey_mac = None
@@ -63,8 +63,8 @@ class SCP02:
         counter, card_challenge, card_cryptogram = self._parse_card_response(response)
 
         self.skey_enc = self._derive_key(self.enc, counter, 'enc')
-        self.skey_mac = self._derive_key(self.enc, counter, 'mac')
-        self.skey_dek = self._derive_key(self.enc, counter, 'dec')
+        self.skey_mac = self._derive_key(self.mac, counter, 'mac')
+        self.skey_dek = self._derive_key(self.dek, counter, 'dec')
         
         # GP, appendix E.4.2.1: card authentication cryptogram
         card_cryptogram_check = self._card_crypto(host_challenge, counter, card_challenge)

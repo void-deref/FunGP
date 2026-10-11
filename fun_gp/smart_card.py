@@ -28,11 +28,12 @@ class SmartCard:
     def mutual_auth(self,
             exp_sw1:int|None = None,
             exp_sw2:int|None = None,
+            kvn:int=0x00,
             security_level:int=SecurityLevel.C_MAC
         ):
         host_challenge = list(os.urandom(8))
 
-        cmd_init_update = [0x80, 0x50, 0x00, 0x00, 0x08] + host_challenge
+        cmd_init_update = [0x80, 0x50, kvn, 0x00, 0x08] + host_challenge
         resp, sw1, sw2 = self.transmit(cmd_init_update, exp_sw1, exp_sw2, cmd_name = 'Initialize update')
 
         counter, card_challenge, host_challenge = self._scp02.init_update(resp, host_challenge)

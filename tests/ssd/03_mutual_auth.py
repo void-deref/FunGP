@@ -9,6 +9,6 @@ def main():
     with Reader() as reader:
         isd = SmartCard(reader.plain_apdu, SCP02(ssd_keyset), CCM())
         isd.transmit('00a4 0400' + lv_hex(ssd_aid), 0x90, 0x00, cmd_name='Select ISD secured applet')
-        isd.mutual_auth(security_level=sec_level)
+        isd.mutual_auth(kvn=0x20, security_level=sec_level)
 
 main()
