@@ -110,30 +110,14 @@ def install_ssd(isd:SmartCard):
 
 
 def main():
-    sec_level = SecurityLevel.C_MAC
     with Reader() as reader:
         isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
         isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
-        isd.mutual_auth(security_level=sec_level)
+        isd.mutual_auth(security_level=SecurityLevel.C_MAC)
 
         install_ssd(isd)
         install_for_perso(isd, ssd_aid)
         personalize_ssd(isd)
-
-    # for demonstration purpose only: instantiated SSD hasn't applet installation privileges
-    with Reader() as reader:
-        my_SSD = SmartCard(reader.plain_apdu, SCP02(ssd_keyset), CCM())
-        my_SSD.transmit('00a4 0400' + lv_hex(ssd_aid), 0x90, 0x00, 'Select my SSD')
-        my_SSD.mutual_auth(security_level=sec_level)
-
-        my_SSD.install_app_scp02(applet_cap_path, InstallParams(),exp_sw1=0x69, exp_sw2=0x85)
-        # install_for_extradition(isd, ssd_aid)
-    
-    with Reader() as reader:
-        isd = SmartCard(reader.plain_apdu, SCP02(isd_keyset), CCM())
-        isd.transmit('00a4 0400', 0x90, 0x00, 'Select ISD')
-        isd.mutual_auth(security_level=sec_level)
-        
         isd.install_app_scp02(applet_cap_path, InstallParams(),exp_sw1=0x90, exp_sw2=0x00)
         install_for_extradition(isd, ssd_aid)
 
