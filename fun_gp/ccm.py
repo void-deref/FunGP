@@ -98,8 +98,6 @@ class UICCParams:
         self.toolkit_params = [0x80] + lv_list(self.priority + self.timers + self.text_length + self.menu_entries +
                                                self.channels + self.msl + self.tar + self.services)
         
-        # fullu qualified ECP USIM AID: A0000000871002FF49FFFF89040B00FF
-        acc_domain = lv_list('00 0100 00' + lv_hex('A0000000871002FF49FFFF89040B00FF'))
         self.uicc_fs = [0x81] + lv_list('00 0100 00')
         self.usim_fs = [0x82] + lv_list('00 0100 00')
 

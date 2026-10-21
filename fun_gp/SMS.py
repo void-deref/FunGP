@@ -227,7 +227,7 @@ class SMSPP:
         self.device_identities = hex_to_bytes('8202 8381')
         
         # TON - international number; NPI - ISDN. SMSC address
-        self.address    = [0x06] + lv_list('81' + '4149')
+        self.address    = [0x06] + lv_list('81' + '2143')
         
         self.tpdu = SMS_TPDU(user_data, is_concat, is_secured)
 
