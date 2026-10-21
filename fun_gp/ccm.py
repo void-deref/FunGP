@@ -81,27 +81,33 @@ class SIMParams:
 
 
 class UICCParams:
-    def __init__(self, msl:str='16', tar:str='544152'):
+    def __init__(
+            self,
+            msl:str='16',
+            tar:str='544152',
+            text_length:str ='00',
+            menu_entries:str='00'
+        ):
         """
         :param msl: exactly as SPI.1 byte, e.g. '16'
         :param tar: a TAR value represented as hex string
         """
-        self.priority      = [0xFF]       # lowest priority
-        self.timers        = [0x00]       # no timers needed for this applet
-        self.text_length   = [0x00]       # text length attribute
-        self.menu_entries  = [0x00]       # No menu entries
-        self.channels      = [0x00]       # There is no need in BIP channels
-        self.msl           = lv_list('01' + msl) # Abide the SPI1
-        self.tar           = lv_list(tar)
-        self.services      = [0x00]       # services
+        priority      = [0xFF]       # lowest priority
+        timers        = [0x00]       # no timers needed for this applet
+        text_length   = hex_to_bytes(text_length)  # text length attribute
+        menu_entries  = hex_to_bytes(menu_entries) # No menu entries
+        channels      = [0x00]       # There is no need in BIP channels
+        msl           = lv_list('01' + msl) # Abide the SPI1
+        tar           = lv_list(tar)
+        services      = [0x00]       # services
 
-        self.toolkit_params = [0x80] + lv_list(self.priority + self.timers + self.text_length + self.menu_entries +
-                                               self.channels + self.msl + self.tar + self.services)
+        toolkit_params = [0x80] + lv_list(priority + timers + text_length + menu_entries +
+                                               channels + msl + tar + services)
         
-        self.uicc_fs = [0x81] + lv_list('00 0100 00')
-        self.usim_fs = [0x82] + lv_list('00 0100 00')
+        uicc_fs = [0x81] + lv_list('00 0100 00')
+        usim_fs = [0x82] + lv_list('00 0100 00')
 
-        self.params_ea = [0xEA] + lv_list(self.toolkit_params + self.uicc_fs + self.usim_fs)
+        self.params_ea = [0xEA] + lv_list(toolkit_params + uicc_fs + usim_fs)
 
     def _build_list(self):
         return self.params_ea
