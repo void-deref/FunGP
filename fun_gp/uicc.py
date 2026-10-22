@@ -1,4 +1,4 @@
-from fun_gp import  SCP80, CCM, ProParser, InstallParams, EventDownload
+from fun_gp import  SCP80, CCM, ProParser, InstallParams, EventDownload, MenuSelection
 
 from fun_gp import hex_to_bytes, lv_hex, lv_list
 
@@ -110,6 +110,7 @@ class UICC:
     def event_download(self, event:EventDownload, add_info:str='', cmd_name:str=''):
         resp, sw1, sw2 = self.envelope(event[0:], cmd_name=f'[EVENT DOWNLOAD] {cmd_name}')
         while sw1 == 0x91:
+                self.gen_res.add_info = []
                 resp, _, _ = self.fetch(sw2)
                 cmd_type   = self.parser.parse(resp)
                 
@@ -117,11 +118,10 @@ class UICC:
                     self.gen_res.add_info = lv_list('0402 011E')
                 elif cmd_type[3] == 0x26: # IMEI
                     self.gen_res.add_info = hex_to_bytes(add_info)
-                
+                    
                 _, sw1, sw2   = self.terminal_response(cmd_type, self.gen_res)
         return resp, sw1, sw2
-        
-
+    
 
     def install_app_scp80(
             self, cap_path:str, install_params:InstallParams,

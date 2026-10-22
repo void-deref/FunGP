@@ -243,7 +243,8 @@ class ProParser:
                     pass
                 case 0x0F | 0x8f: # Item | eCAT client identity
                     decoded = decode_alpha_field(value[1:])
-                    print(f'\titem {value[0]:02x}: {decoded} (plain hex: {bytes_to_hex(value)})')
+                    if len(decoded) != 0:
+                        print(f'\titem {value[0]:02x}: {decoded} (plain hex: {bytes_to_hex(value)})')
 
                 case 0x10 | 0x90: # Item identifier | Encapsulated envelope type
                     pass
