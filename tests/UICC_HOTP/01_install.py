@@ -7,6 +7,7 @@ import time
 
 card_deck_path = RESOURCES_DIR / "sysmocom-cards.json"
 
+# https://github.com/void-deref/UICC-HOTP
 path_to_applet = RESOURCES_DIR / 'UICC_HOTP.cap'
 sys_params     = UICCParams(msl='16',  tar='46554E', text_length='14', menu_entries='010100')
 install_params = InstallParams(
