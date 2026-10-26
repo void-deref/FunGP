@@ -146,7 +146,7 @@ class ProParser:
                 case 0x05 | 0x85: # Alpha identifier  (ETSI 102 223, 8.2)
                     alpha_str = bytes_to_hex(value)
                     decoded = decode_alpha_field(alpha_str)
-                    print(f'\tAlpha identifier: {decoded}')
+                    print(f'\tAlpha ID    : {decoded}')
 
                 case 0x06 | 0x86: # Address
                     address = decode_bcd(value[1:])
