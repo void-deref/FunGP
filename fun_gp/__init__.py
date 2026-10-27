@@ -7,7 +7,7 @@ from fun_gp.utils import \
 from fun_gp.card_db              import Card, CardDataBase
 from fun_gp.reader               import Reader
 from fun_gp.scp02                import SecurityLevel, SCP02
-from fun_gp.ccm                  import CCM, ForLoad, LoadParams, ForInstall, InstallParams, SIMParams, UICCParams
+from fun_gp.ccm                  import CCM, ForLoad, LoadParams, ForInstall, InstallParams, SIMToolkitParams, UICCToolkitParams
 from fun_gp.smart_card           import SmartCard
 from fun_gp.event_download       import EnumDeviceID, EnumEventType, EnumLocationStatus, EnumCardReaderStatus
 from fun_gp.event_download       import EventDownload, LocationStatus, UserActivity, CardReaderStatus, LanguageSelection

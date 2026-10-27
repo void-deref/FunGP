@@ -1,5 +1,5 @@
 from fun_gp import Reader, SmartCard, CCM, UICC, InstallParams, \
-                    SIMParams, UICCParams, SCP80, SCP80Params,\
+                    SIMToolkitParams, UICCToolkitParams, SCP80, SCP80Params,\
                     RESOURCES_DIR
 
 from fun_gp import lv_hex, encode_bcd
@@ -9,7 +9,7 @@ card_deck_path = RESOURCES_DIR / "sysmocom-cards.json"
 
 # https://github.com/void-deref/UICC-HOTP
 path_to_applet = RESOURCES_DIR / 'UICC_HOTP.cap'
-sys_params     = UICCParams(msl='16',  tar='46554E', text_length='14', menu_entries='010100')
+sys_params     = UICCToolkitParams(msl='16',  tar='46554E', text_length='14', menu_entries='010100')
 install_params = InstallParams(
     app_params =
         '01020304050607000010203040506070 01020304050607000010203040506070\

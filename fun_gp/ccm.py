@@ -45,7 +45,7 @@ class ForLoad:
         return len(self._build_list())
 
 
-class SIMParams:
+class SIMToolkitParams:
     def __init__(
             self, msl:str   ='16',
             tar:str         ='544152',
@@ -80,7 +80,7 @@ class SIMParams:
         return len(self._build_list())
 
 
-class UICCParams:
+class UICCToolkitParams:
     def __init__(
             self,
             msl:str='16',
@@ -121,7 +121,7 @@ class UICCParams:
 
 
 class InstallParams:
-    def __init__(self, app_params:str=None, sim_params:SIMParams|UICCParams|list[int]=None):
+    def __init__(self, app_params:str=None, sim_params:SIMToolkitParams|UICCToolkitParams|list[int]=None):
         self.app_params = [0xC9] + lv_list(app_params) if app_params else [0xC9, 0x00]
         self.sim_params = sim_params[0:] if sim_params else []
 
